@@ -1,4 +1,10 @@
 import logging
+import json
+
+
+def dump_json(dct):
+    return json.dumps(dct, ensure_ascii=False)
+
 
 FORMATTER = logging.Formatter('%(asctime)s %(name)s:%(levelname)s - %(message)s')
 
@@ -19,5 +25,4 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(FORMATTER)
 logger.addHandler(stream_handler)
 
-logging.debug('STARTING LOGGING')
-logging.info('STARTING LOGGING INFO')
+logging.info('LOGGING SET UP')

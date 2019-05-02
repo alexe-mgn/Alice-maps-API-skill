@@ -1,7 +1,5 @@
-import json
-
 from flask import Flask, request
-from settings import logging
+from settings import logging, dump_json
 from dialog_json_handler import Storage, Request, Response
 
 app = Flask(__name__)
@@ -13,7 +11,7 @@ def error_404(*args):
     logging.error('404')
     logging.error(request.url)
     logging.error(str(dict(request.headers)))
-    logging.error(json.dumps(request.json, ensure_ascii=False))
+    logging.error(dump_json(request.json))
 
 
 @app.route('/post', methods=['POST'])
@@ -21,19 +19,27 @@ def request_handler():
     data = request.json
 
     resp = dialog(data)
-    rs = resp.send()
-    logging.warning(str(rs))
-    logging.warning(str(rs.json))
-    logging.debug('DEBUG')
-    return rs
+
+    return resp.send()
 
 
 def dialog(data):
     storage = Storage(data)
-    req = Request(data)
+    user = Request(data)
     resp = Response(data)
 
-    if req.new:
-        resp.msg('Хотите сыграть? Отлично, обожаю эту игру!\nИз какого города начнём?')
+    if user.state == 0:
+        if user.delay == 0:
+            resp.msg('Приветствую! Не хотите поиграть в...\nПутешествие?')
+            user.delay_up()
+        elif user.delay < 2:
+            if True:
+                resp.msg('Прекрасно! Как вас зовут?')
+                user.state = 1
+            else:
+                resp.msg('Ну давайте, будет весело!')
+                user.delay_up()
+        else:
+            resp.end = True
 
     return resp

@@ -1,7 +1,5 @@
-import json
-
 from flask import jsonify
-from settings import logging
+from settings import logging, dump_json
 
 
 class DictHandler:
@@ -27,7 +25,9 @@ class Storage(DictHandler):
         user_id = data['session']['user_id']
         if user_id in cls.storage:
             logging.info('CONTINUE with ' + str(user_id))
-            return cls.storage[user_id]
+            obj = cls.storage[user_id]
+            obj.pre_step()
+            return obj
         else:
             logging.info('NEW instance ' + str(user_id))
             new = super().__new__(cls)
@@ -36,26 +36,52 @@ class Storage(DictHandler):
 
     def __init__(self, req):
         super().__init__()
+        self.request = None
+        self.response = None
         self.data = {
             'buttons': [],
-            'state': 'new'
+            'state': 0,
+            'decay': 0
         }
+
+    def pre_step(self):
+        pass
+
+    def post_step(self):
+        pass
 
     @property
     def state(self):
         return self['state']
 
     @state.setter
-    def state(self, text):
-        self['state'] = text
+    def state(self, st):
+        if self.state != st:
+            self['delay'] = 0
+        self['state'] = st
+
+    @property
+    def delay(self):
+        return self['delay']
+
+    @delay.setter
+    def delay(self, d):
+        self['delay'] = 0
+
+    def delay_up(self):
+        self['delay'] += 1
+
+    def add_button(self, text, one_time=True, url=None, payload=None):
+        pass
 
 
 class Request(DictHandler):
 
     def __init__(self, data):
         super().__init__(data)
-        logging.debug('INPUT ' + json.dumps(self.data, ensure_ascii=False))
+        logging.info('INPUT ' + dump_json(self.data))
         self.storage = Storage(data)
+        self.storage.request = self
 
     @property
     def new(self):
@@ -68,6 +94,17 @@ class Request(DictHandler):
     @state.setter
     def state(self, val):
         self.storage.state = val
+
+    @property
+    def delay(self):
+        return self.storage.delay
+
+    @delay.setter
+    def delay(self, d):
+        self.storage.delay = d
+
+    def delay_up(self):
+        self.storage.delay_up()
 
     @property
     def command(self):
@@ -83,6 +120,7 @@ class Response(DictHandler):
     def __init__(self, data):
         super().__init__()
         self.storage = Storage(data)
+        self.storage.response = self
         self.data = {
             'session': data['session'],
             'version': data['version'],
@@ -101,8 +139,8 @@ class Response(DictHandler):
         self['response']['end_session'] = bool(end)
 
     def send(self):
-        logging.debug('RESPONSE ' + json.dumps(self.data, ensure_ascii=False))
-        logging.info('SENDING ' + str(jsonify(self.data)))
+        self.storage.post_step()
+        logging.info('SENDING ' + dump_json(self.data))
         return jsonify(self.data)
 
     @property
@@ -116,3 +154,15 @@ class Response(DictHandler):
     def msg(self, text):
         old = self['response'].get('text', '')
         self['response']['text'] = old + ('\n' if old else '') + text
+
+    @property
+    def buttons(self):
+        return self['response']['buttons']
+
+    def add_button(self, text, url=None, payload=None):
+        d = {'text': text}
+        if url is not None:
+            d['url'] = str(url)
+        if payload is not None:
+            d['payload'] = str(payload)
+        self['response']['buttons'] += d
