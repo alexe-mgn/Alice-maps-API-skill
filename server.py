@@ -22,8 +22,8 @@ def request_handler():
 
     response = dialog(data)
     rs = response.send()
-    print(rs)
-    print(rs.json)
+    logging.warning(str(rs))
+    logging.warning(str(rs.json))
     return rs
 
 
