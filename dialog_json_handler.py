@@ -10,6 +10,9 @@ class DictHandler:
     def __getitem__(self, item):
         return self.data[item]
 
+    def get(self, item, default=None):
+        return self.data.get(item, default)
+
     def __setitem__(self, item, val):
         self.data[item] = val
 
@@ -41,7 +44,7 @@ class Storage(DictHandler):
         self.data = {
             'buttons': [],
             'state': 0,
-            'decay': 0
+            'delay': 0
         }
 
     def pre_step(self):
@@ -62,7 +65,7 @@ class Storage(DictHandler):
 
     @property
     def delay(self):
-        return self['delay']
+        return self.get('delay', 0)
 
     @delay.setter
     def delay(self, d):
