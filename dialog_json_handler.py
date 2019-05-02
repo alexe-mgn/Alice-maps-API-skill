@@ -1,7 +1,7 @@
 import json
-import logging
 
 from flask import jsonify
+from settings import logging
 
 
 class DictHandler:
@@ -103,6 +103,7 @@ class Response(DictHandler):
     @property
     def send(self):
         logging.debug('RESPONSE ' + json.dumps(self.data, ensure_ascii=False))
+        logging.info('SENDING ' + str(jsonify(self.data)))
         return jsonify(self.data)
 
     @property
