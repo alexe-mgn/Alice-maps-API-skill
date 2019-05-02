@@ -1,16 +1,23 @@
 import logging
 
-LOGGER_NAME = 'main_logger'
+FORMATTER = logging.Formatter('%(asctime)s %(name)s:%(levelname)s - %(message)s')
 
-logger = logging.getLogger(LOGGER_NAME)
-
-fileHandler = logging.FileHandler('local_log.log', mode='w')
-logger.addHandler(fileHandler)
-
-streamHandler = logging.StreamHandler()
-logger.addHandler(streamHandler)
-
+logging.basicConfig()
+logger = logging.getLogger()
+logger.handlers.clear()
 logger.setLevel(logging.DEBUG)
+
+last_handler = logging.FileHandler('last_log.log', mode='w')
+last_handler.setFormatter(FORMATTER)
+logger.addHandler(last_handler)
+
+file_handler = logging.FileHandler('local_log.log', mode='a')
+file_handler.setFormatter(FORMATTER)
+logger.addHandler(file_handler)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(FORMATTER)
+logger.addHandler(stream_handler)
 
 logging.debug('STARTING LOGGING')
 logging.info('STARTING LOGGING INFO')

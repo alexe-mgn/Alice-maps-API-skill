@@ -100,7 +100,6 @@ class Response(DictHandler):
     def end(self, end):
         self['response']['end_session'] = bool(end)
 
-    @property
     def send(self):
         logging.debug('RESPONSE ' + json.dumps(self.data, ensure_ascii=False))
         logging.info('SENDING ' + str(jsonify(self.data)))
