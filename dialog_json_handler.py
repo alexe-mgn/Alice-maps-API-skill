@@ -112,3 +112,7 @@ class Response(DictHandler):
     @text.setter
     def text(self, text):
         self['response']['text'] = text
+
+    def msg(self, text):
+        old = self['response'].get('text', '')
+        self['response']['text'] = old + ('\n' if old else '') + text
