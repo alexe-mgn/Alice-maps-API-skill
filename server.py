@@ -3,7 +3,7 @@ import logging
 from flask import Flask, request
 from dialog_json_handler import Storage, Request, Response
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -24,5 +24,8 @@ def dialog(data):
     storage = Storage(data)
     req = Request(data)
     resp = Response(data)
+
+    if req.new:
+        pass
 
     return resp

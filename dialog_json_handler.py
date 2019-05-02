@@ -34,7 +34,7 @@ class Storage(DictHandler):
             cls.storage[user_id] = new
             return new
 
-    def __init__(self, data):
+    def __init__(self, req):
         super().__init__()
         self.data = {
             'buttons': [],
@@ -53,8 +53,8 @@ class Storage(DictHandler):
 class Request(DictHandler):
 
     def __init__(self, data):
-        logging.debug('INPUT ' + json.dumps(self.data, ensure_ascii=False))
         super().__init__(data)
+        logging.debug('INPUT ' + json.dumps(self.data, ensure_ascii=False))
         self.storage = Storage(data)
 
     @property
