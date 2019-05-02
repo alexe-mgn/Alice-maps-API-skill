@@ -20,10 +20,11 @@ def error_404(*args):
 def request_handler():
     data = request.json
 
-    response = dialog(data)
-    rs = response.send()
+    resp = dialog(data)
+    rs = resp.send()
     logging.warning(str(rs))
     logging.warning(str(rs.json))
+    logging.debug('DEBUG')
     return rs
 
 
