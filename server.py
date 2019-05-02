@@ -7,8 +7,6 @@ from dialog_json_handler import Storage, Request, Response
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-storage = {}
-
 
 @app.errorhandler(404)
 def error_404(*args):
@@ -23,8 +21,10 @@ def request_handler():
     data = request.json
 
     response = dialog(data)
-
-    return response.send()
+    rs = response.send()
+    print(rs)
+    print(rs.json)
+    return rs
 
 
 def dialog(data):
@@ -36,9 +36,3 @@ def dialog(data):
         pass
 
     return resp
-
-
-if __name__ == '__main__':
-    logging.info('RUNNING APP')
-    app.run()
-    logging.info('EXITING APP')
