@@ -33,6 +33,6 @@ def dialog(data):
     resp = Response(data)
 
     if req.new:
-        pass
+        resp.msg('Хотите сыграть? Отлично, обожаю эту игру!\nИз какого города начнём?')
 
     return resp
