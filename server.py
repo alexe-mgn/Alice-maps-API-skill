@@ -69,6 +69,7 @@ def dialog(data):
             if fios and 'first_name' in fios[0]['value']:
                 logging.info('NAME RECOGNIZED ' + dump_json(fios))
                 storage['name'] = fios[0]['value']['first_name']
+                resp.msg('Очень приятно, а я - Алиса')
                 user.state = 2
             else:
                 resp.msg('Простите, я не расслышала вашего имени. Повторите, пожалуйста.')
@@ -77,7 +78,7 @@ def dialog(data):
     if user.state == 2:
         if user.delay == 0:
             user.init_state()
-            resp.msg('Хотите узнать правила игры?')
+            resp.msg('Хотите узнать правила игры, {}?'.format(storage['name']))
         else:
             a, d = sentence_agreement(user.text)
             if a > d:
