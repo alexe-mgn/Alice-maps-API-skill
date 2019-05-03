@@ -36,7 +36,8 @@ class Button(DictHandler):
         self.life = life
         self.data = {
             'title': text,
-            'payload': {} if not payload else payload
+            'payload': {} if not payload else payload,
+            'hide': True
         }
         if url:
             self.data['url'] = url
@@ -82,6 +83,7 @@ class Storage(DictHandler):
 
     @classmethod
     def remove(cls, uid):
+        logging.info('REMOVING ' + str(uid))
         del cls.storage[uid]
 
     @property

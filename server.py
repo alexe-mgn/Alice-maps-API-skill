@@ -26,6 +26,8 @@ def request_handler():
 
 
 def dialog(data):
+    if data['session']['new']:
+        Storage.remove(data['session']['user_id'])
     user = Storage(data)
     resp = Response(data)
     logging.info('CONTINUE ' + str(user.id))

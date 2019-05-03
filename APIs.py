@@ -107,64 +107,41 @@ class MapsHandler:
             pars[k] = v
         return pars
 
-    def get_rect(self, rect, url=True, surface=False, **kwargs):
+    def get_url(self, static=False, **kwargs):
         pars = self.overriden_pars(**kwargs)
-        if url:
-            rect = GeoRect(rect)
-            pars.pop('bbox', None)
-            pars['ll'] = rect.center
-            pars['spn'] = rect.size
-            dct = Str.query(pars)
-            return MAPS_URL + '&'.join(['{}={}'.format(k, v) for k, v in dct.items()])
-        else:
-            pars['bbox'] = GeoRect(rect)
-            dct = Str.query(pars)
-            resp = requests.get(STATIC_MAPS_API_URL, params='&'.join(['{}={}'.format(k, v) for k, v in dct.items()]))
-            try:
-                resp.raise_for_status()
-            except Exception:
-                print(resp.content)
-                raise
-            mf = BytesIO(resp.content)
-            if surface:
-                import pygame
-                return pygame.image.load(mf, '_.png')
-            else:
-                return mf
-
-    def get(self, url=True, surface=False, **kwargs):
-        pars = self.overriden_pars(**kwargs)
-        dct = Str.query(pars)
-        if url:
+        if not static:
             rect = pars.pop('bbox', None)
             if rect is not None:
                 pars['ll'] = rect.center
                 pars['spn'] = rect.size
-            dct = Str.query(pars)
-            return MAPS_URL + '&'.join(['{}={}'.format(k, v) for k, v in dct.items()])
+            return MAPS_URL + Str.string_query(pars)
         else:
-            resp = requests.get(STATIC_MAPS_API_URL, params='&'.join(['{}={}'.format(k, v) for k, v in dct.items()]))
-            try:
-                resp.raise_for_status()
-            except Exception:
-                print(resp.content)
-                raise
-            mf = BytesIO(resp.content)
-            if surface:
-                import pygame
-                return pygame.image.load(mf, '_.png')
-            else:
-                return mf
+            return STATIC_MAPS_API_URL + Str.string_query(pars)
+
+    def get(self, surface=False, **kwargs):
+        resp = requests.get(self.get_url(static=True, **kwargs))
+        try:
+            resp.raise_for_status()
+        except Exception:
+            print(resp.content)
+            raise
+        mf = BytesIO(resp.content)
+        if surface:
+            import pygame
+            return pygame.image.load(mf, '_.png')
+        else:
+            return mf
 
     def show(self, **kwargs):
         import pygame
-        screen = pygame.display.set_mode((650, 400))
-        image = self.get(**kwargs)
-        screen = pygame.display.set_mode((650, 400))
+        pygame.display.set_mode((650, 400))
+        image = self.get(surface=True, **kwargs)
+        screen = pygame.display.set_mode(image.get_size())
         screen.blit(image, (0, 0))
         pygame.display.flip()
         while pygame.event.wait().type != pygame.QUIT:
             pass
+        pygame.quit()
 
     def include_view(self, obj):
         if hasattr(obj, 'rect'):
@@ -264,6 +241,25 @@ class MapsHandler:
             if not self.mode_init:
                 self.pars['ll'] = [0, 0]
         self.mode_init = True
+
+    @property
+    def size(self):
+        mode = self.pos_mode
+        if mode == 'bbox':
+            return self.pars['bbox'].size
+        elif mode == 'spn':
+            return list(self.pars['spn'])
+
+    @size.setter
+    def size(self, sz):
+        mode = self.pos_mode
+        if mode == 'bbox':
+            rect = self.pars['bbox']
+            c = rect.center
+            rect.size = sz
+            rect.center = c
+        elif mode == 'spn':
+            self.pars['spn'] = list(sz)
 
     def bounding(self):
         if self.mode_init:

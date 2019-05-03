@@ -76,6 +76,10 @@ class Str:
                 res[k] = str(v)
         return res
 
+    @classmethod
+    def string_query(cls, pars):
+        return '&'.join(['{}={}'.format(k, v) for k, v in cls.query(pars).items()])
+
 
 class Parse:
 
