@@ -153,6 +153,11 @@ class Storage(DictHandler):
         else:
             logging.info('STATE WAS NOT INIT, leaving delay at ' + str(self.delay))
 
+    def get_button(self, bid):
+        for i in self['buttons']:
+            if i.id == bid:
+                return i
+
     def add_button(self, bid, text, attach=True, url=None, life=1, payload=None):
         btn = Button(self, bid, text, attach=attach, url=url, life=life, payload=payload)
         self['buttons'].append(btn)

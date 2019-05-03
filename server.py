@@ -112,12 +112,11 @@ def dialog(data):
                     if not res:
                         resp.msg('Простите, я такого места не знаю, попробуйте ещё раз')
                     else:
-                        resp.msg('Вы это место иммели ввиду?')
                         user['source'] = res[0].pos
                         user.add_button('show_place_agreement',
                                         'Показать карту',
                                         url=MapsApi(bbox=res[0].rect).get_url(),
-                                        attach=True, life=-1)
+                                        attach=True, life=1)
                         user.state = -3
                 else:
                     resp.msg('Я немного не понимаю, что это за место такое')
@@ -125,6 +124,7 @@ def dialog(data):
 
         if user.state == -3:
             if user.delay == 0:
+                resp.msg('Вы это место имели ввиду?')
                 user.init_state()
             else:
                 a, d = sentence_agreement(user.text)
@@ -146,7 +146,7 @@ def dialog(data):
             else:
                 geo = user.geo_entity()
                 if geo:
-                    res = GeoHandler(geocode=geo[0])
+                    res = GeoApi(geo[0])
                     logging.info('USER GEO ' + dump_json(res.data))
                     if not res:
                         resp.msg('Простите, я такого места не знаю, попробуйте ещё раз')
@@ -162,7 +162,7 @@ def dialog(data):
                         user['target'] = r
                         user.add_button('show_place_agreement',
                                         'Показать карту',
-                                        MapsHandler(bbox=res[0].rect).get_url(),
+                                        MapsApi(bbox=res[0].rect).get_url(),
                                         life=-1)
                         user.state = -4
             user.delay_up()
@@ -182,6 +182,8 @@ def dialog(data):
                 else:
                     resp.msg('Я вас немного не поняла')
             user.delay_up()
+    elif user.type == 'ButtonPressed':
+        resp.text = 'Выполняю'
 
     user.post_step()
     return resp
