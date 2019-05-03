@@ -203,9 +203,12 @@ def dialog(data):
 
             mid = DialogsApi.upload_image_url(ma.get_url(static=True))
             user.set_image('temp', mid)
-            
+
             card = Card(user, 'Итоговый путь', mid)
-            card['button'] = Button(user, None, 'Показать карту', False, url=ma.get_url(static=False), life=-1)
+            card['button'] = Button(
+                user, None, 'Показать карту', attach=True,
+                url=ma.get_url(static=False), life=-1
+            ).send()
             user.add_card(card)
             resp.msg('Маршрут построен')
 
