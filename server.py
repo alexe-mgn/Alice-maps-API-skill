@@ -114,7 +114,7 @@ def dialog(data):
                     user['source'] = res[0].pos
                     user.add_button('show_place_agreement',
                                     'Показать карту',
-                                    MapsHandler(bbox=res[0].rect).get(),
+                                    MapsHandler(bbox=res[0].rect).get_url(),
                                     life=-1)
                     user.state = -3
             else:
@@ -160,7 +160,7 @@ def dialog(data):
                     user['target'] = r
                     user.add_button('show_place_agreement',
                                     'Показать карту',
-                                    MapsHandler(bbox=res[0].rect).get(),
+                                    MapsHandler(bbox=res[0].rect).get_url(),
                                     life=-1)
                     user.state = -4
         user.delay_up()
