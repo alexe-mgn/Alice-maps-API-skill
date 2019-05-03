@@ -35,7 +35,7 @@ class Button(DictHandler):
         self.id = bid
         self.life = life
         self.data = {
-            'text': text,
+            'title': text,
             'payload': {} if not payload else payload
         }
         if url:

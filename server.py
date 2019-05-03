@@ -30,8 +30,7 @@ def dialog(data):
     resp = Response(data)
     logging.info('CONTINUE ' + str(user.id))
     logging.info('INPUT ' + dump_json(user.request))
-    logging.info('STATE ' + str(user.state) + ' DELAY ' + str(user.delay))
-    logging.info('STORAGE ' + dump_json(user.data))
+    logging.info('STATE ' + str(user.state) + ' ' + str(user.state_init) + ' DELAY ' + str(user.delay))
 
     user.pre_step()
 
