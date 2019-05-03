@@ -83,8 +83,9 @@ class Storage(DictHandler):
 
     @classmethod
     def remove(cls, uid):
-        logging.info('REMOVING ' + str(uid))
-        del cls.storage[uid]
+        if uid in cls.storage:
+            logging.info('REMOVING ' + str(uid))
+            del cls.storage[uid]
 
     @property
     def id(self):
