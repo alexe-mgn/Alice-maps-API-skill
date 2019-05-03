@@ -115,8 +115,7 @@ def dialog(data):
                         user['source'] = res[0].pos
                         user.add_button('show_place_agreement',
                                         'Показать карту',
-                                        url=MapsApi(bbox=res[0].rect).get_url(),
-                                        life=-1)
+                                        url=MapsApi(bbox=res[0].rect).get_url())
                         user.state = -3
                 else:
                     resp.msg('Я немного не понимаю, что это за место такое')
@@ -162,8 +161,7 @@ def dialog(data):
                         user['target'] = r
                         user.add_button('show_place_agreement',
                                         'Показать карту',
-                                        MapsApi(bbox=res[0].rect).get_url(),
-                                        life=-1)
+                                        MapsApi(bbox=res[0].rect).get_url())
                         user.state = -4
             user.delay_up()
 

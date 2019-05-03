@@ -34,6 +34,8 @@ class Button(DictHandler):
         self.storage = storage
         self.id = bid
         self.life = life
+        self.attach = attach
+        self.visible = True
         self.data = {
             'title': text,
             'payload': {} if not payload else payload,
@@ -48,7 +50,38 @@ class Button(DictHandler):
 
     def send(self):
         self.life -= 1
+        if self.attach:
+            self.visible = False
         return self.data
+
+    def on_death(self):
+        pass
+
+
+class Card:
+
+    def __init__(self, storage, text, image, life=1):
+        super().__init__()
+        self.storage = storage
+        self.life = life
+        self.visible = True
+        self.data = {
+            'title': text,
+            'type': 'BigImage',
+            'image_id': image
+        }
+
+    @property
+    def alive(self):
+        return self.life != 0
+
+    def send(self):
+        self.life -= 1
+        self.visible = False
+        return self.data
+
+    def on_death(self):
+        pass
 
 
 class Storage(DictHandler):
@@ -69,13 +102,14 @@ class Storage(DictHandler):
         logging.info('NEW STORAGE INSTANCE ' + str(req['session']['user_id']))
         self.request = {}
         self.response = None
-        self.data = {
-            'id': req['session']['user_id'],
-            'buttons': [],
-            'state': 0,
-            'state_init': False,
-            'delay': 0
-        }
+        self._state = 0
+        self._state_init = False
+        self._delay = 0
+        self._id = req['session']['user_id']
+        self.buttons = []
+        self.card = None
+        self.images = {}
+        self.data = {}
 
     def __init__(self, req):
         super().__init__()
@@ -89,14 +123,14 @@ class Storage(DictHandler):
 
     @property
     def id(self):
-        return self.get('id', 0)
+        return self._id
 
     @id.setter
     def id(self, n):
-        oid = self.id
+        oid = self._id
         if n != oid:
             if oid not in self.storage:
-                self['id'] = n
+                self._id = n
                 self.storage[n] = self
                 del self.storage[n]
 
@@ -105,12 +139,21 @@ class Storage(DictHandler):
 
     def post_step(self):
         bts = []
-        for i in self['buttons'].copy():
+        for i in self.buttons.copy():
             if i.alive:
-                bts.append(i.send())
+                v = i.visible
+                d = i.send()
+                if v:
+                    bts.append(d)
             else:
-                self['buttons'].remove(i)
+                i.on_death()
+                self.buttons.remove(i)
         self.response['response']['buttons'] = bts
+        self.response['response']['card'] = {
+            'type': 'BigImage',
+            'image_id': '997614/1a43743e226d61060b9f',
+            'title': 'Карточка'
+        }
 
     @property
     def type(self):
@@ -119,53 +162,53 @@ class Storage(DictHandler):
 
     @property
     def state(self):
-        return self['state']
+        return self.state
 
     @state.setter
     def state(self, st):
-        if self.state != st:
+        if self._state != st:
             logging.info('STATE SWITCHED ' + str(st))
-            self['delay'] = 0
-            self['state'] = st
-        self['state_init'] = False
+            self._delay = 0
+            self._state = st
+        self._state_init = False
 
     @property
     def state_init(self):
-        return self['state_init']
+        return self._state_init
 
     def init_state(self, delay_up=False):
-        self['state_init'] = True
+        self._state_init = True
         if delay_up:
-            self['delay'] += 1
+            self.delay_up()
 
     @property
     def delay(self):
-        return self.get('delay', 0)
+        return self._delay
 
     @delay.setter
     def delay(self, d):
-        self['delay'] = d
+        self._delay = d
 
     def delay_up(self):
         if self.state_init:
-            self['delay'] += 1
-            logging.info('DELAY UP: ' + str(self.delay))
+            self._delay += 1
+            logging.info('DELAY UP: ' + str(self._delay))
         else:
-            logging.info('STATE WAS NOT INIT, leaving delay at ' + str(self.delay))
+            logging.info('STATE WAS NOT INIT, leaving delay at ' + str(self._delay))
 
     def get_button(self, bid):
-        for i in self['buttons']:
+        for i in self.buttons:
             if i.id == bid:
                 return i
 
     def add_button(self, bid, text, attach=True, url=None, life=1, payload=None):
         btn = Button(self, bid, text, attach=attach, url=url, life=life, payload=payload)
-        self['buttons'].append(btn)
+        self.buttons.append(btn)
 
     def remove_button(self, bid):
-        for i in self['buttons'].copy():
+        for i in self.buttons.copy():
             if i.id == bid:
-                self['buttons'].remove(i)
+                self.buttons.remove(i)
 
     # REQUEST
 
