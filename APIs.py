@@ -60,6 +60,11 @@ class Toponym:
             else:
                 return self.data['properties']['GeocoderMetaData']['kind']
 
+    @property
+    def formatted_address(self):
+        if not self.feature:
+            return self['metaDataProperty']['GeocoderMetaData']['Address']['formatted']
+
     def __getitem__(self, key):
         return self.data[key]
 
@@ -291,7 +296,7 @@ class MapsApi:
         if p_ind is not None:
             self.pars['pl'][p_ind]['curves'].append(points)
         else:
-            self.add_poly(curves=[list(points)], **kwargs)
+            self.add_poly(curves=[points], **kwargs)
 
 
 class GeoApi:

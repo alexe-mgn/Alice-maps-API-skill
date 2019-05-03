@@ -107,7 +107,7 @@ class Storage(DictHandler):
         self._delay = 0
         self._id = req['session']['user_id']
         self.buttons = []
-        self.card = None
+        self.cards = []
         self.images = {}
         self.data = {}
 
@@ -149,11 +149,19 @@ class Storage(DictHandler):
                 i.on_death()
                 self.buttons.remove(i)
         self.response['response']['buttons'] = bts
-        self.response['response']['card'] = {
-            'type': 'BigImage',
-            'image_id': '997614/1a43743e226d61060b9f',
-            'title': 'Карточка'
-        }
+
+        card = None
+        for i in self.cards.copy():
+            if i.alive:
+                v = i.visible
+                d = i.send()
+                if v:
+                    card = d
+            else:
+                i.on_death()
+                self.cards.remove(i)
+        if card:
+            self.response['response']['card'] = card
 
     @property
     def type(self):

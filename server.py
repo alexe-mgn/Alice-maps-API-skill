@@ -3,6 +3,7 @@ from settings import logging, dump_json
 from dialog_json_handler import Storage, Response
 from parser import sentence_agreement
 from APIs import GeoApi, MapsApi
+from dialogs_API import DialogsApi
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -112,10 +113,14 @@ def dialog(data):
                     if not res:
                         resp.msg('Простите, я такого места не знаю, попробуйте ещё раз')
                     else:
+                        resp.msg('Вы это место имели ввиду?')
+                        resp.msg("{}".format(res[0].formatted_address))
                         user['source'] = res[0].pos
+                        ma = MapsApi(bbox=res[0].rect)
+                        ma.add_marker(res[0].pos)
                         user.add_button('show_place_agreement',
                                         'Показать карту',
-                                        url=MapsApi(bbox=res[0].rect).get_url())
+                                        ma.get_url(static=False))
                         user.state = -3
                 else:
                     resp.msg('Я немного не понимаю, что это за место такое')
@@ -123,7 +128,6 @@ def dialog(data):
 
         if user.state == -3:
             if user.delay == 0:
-                resp.msg('Вы это место имели ввиду?')
                 user.init_state()
             else:
                 a, d = sentence_agreement(user.text)
@@ -151,6 +155,7 @@ def dialog(data):
                         resp.msg('Простите, я такого места не знаю, попробуйте ещё раз')
                     else:
                         resp.msg('Вы это место иммели ввиду?')
+                        resp.msg("{}".format(res[0].formatted_address))
                         r = res[0].rect
                         c = r.center
                         if r.w < .1:
@@ -159,9 +164,11 @@ def dialog(data):
                             r.h = .1
                         r.center = c
                         user['target'] = r
+                        ma = MapsApi(bbox=res[0].rect)
+                        ma.add_marker(res[0].pos)
                         user.add_button('show_place_agreement',
                                         'Показать карту',
-                                        MapsApi(bbox=res[0].rect).get_url())
+                                        ma.get_url(static=False))
                         user.state = -4
             user.delay_up()
 

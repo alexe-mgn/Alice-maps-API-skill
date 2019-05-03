@@ -35,10 +35,11 @@ class DialogsApi:
 
     @classmethod
     def remove_all_images(cls):
+        r = True
         for i in cls.get_images():
             if not cls.remove_image(i):
-                return False
-        return True
+                r = False
+        return r
 
     @staticmethod
     def upload_image_source(source):
