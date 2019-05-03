@@ -20,6 +20,9 @@ class DictHandler:
     def __setitem__(self, item, val):
         self.data[item] = val
 
+    def __delitem__(self, key):
+        del self.data[key]
+
     @property
     def dict(self):
         return self.data
@@ -36,11 +39,11 @@ class Storage(DictHandler):
         else:
             new = super().__new__(cls)
             cls.storage[user_id] = new
-            logging.info('NEW STORAGE INSTANCE ' + str(user_id))
             new.__first_init(data)
             return new
 
     def __first_init(self, req):
+        logging.info('NEW STORAGE INSTANCE ' + str(req['session']['user_id']))
         self.request = None
         self.response = None
         self.data = {
@@ -52,6 +55,10 @@ class Storage(DictHandler):
 
     def __init__(self, req):
         super().__init__()
+
+    @classmethod
+    def remove(cls, uid):
+        del cls.storage[uid]
 
     @property
     def id(self):
@@ -79,8 +86,9 @@ class Storage(DictHandler):
     @state.setter
     def state(self, st):
         if self.state != st:
+            logging.info('STATE SWITCHED ' + str(st))
             self['delay'] = 0
-        self['state'] = st
+            self['state'] = st
 
     @property
     def delay(self):
@@ -88,9 +96,10 @@ class Storage(DictHandler):
 
     @delay.setter
     def delay(self, d):
-        self['delay'] = 0
+        self['delay'] = d
 
     def delay_up(self):
+        logging.info('DELAY UP: ' + str(self.delay))
         self['delay'] += 1
 
     def add_button(self, text, one_time=True, url=None, payload=None):
@@ -144,6 +153,31 @@ class Request(DictHandler):
     def text(self):
         return self['request']['original_utterance']
 
+    @property
+    def tokens(self):
+        return self['request']['nlu']['tokens']
+
+    def entity(self, t=None):
+        res = []
+        if not t:
+            return self['request']['nlu']['entities']
+        for i in self['request']['nlu']['entities']:
+            if i['type'].lower().split('.')[-1] == t.lower():
+                res.append(i)
+        return res
+
+    def geo_entity(self):
+        geos = self.entity(t='geo')
+        res = []
+        for geo in geos:
+            loc = []
+            for lv in ['country', 'city', 'street', 'house_number', 'airport']:
+                if lv in geo:
+                    loc.append(geo[lv])
+            if loc:
+                res.append(','.join(loc))
+        return res
+
 
 class Response(DictHandler):
 
@@ -171,7 +205,10 @@ class Response(DictHandler):
     def send(self):
         self.storage.post_step()
         logging.info('SENDING ' + dump_json(self.data))
-        return jsonify(self.data)
+        data = jsonify(self.data)
+        if self.end:
+            self.storage.remove(self.storage.id)
+        return data
 
     @property
     def text(self):
