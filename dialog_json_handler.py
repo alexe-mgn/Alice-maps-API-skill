@@ -173,8 +173,8 @@ class Request(DictHandler):
         for geo in geos:
             loc = []
             for lv in ['country', 'city', 'street', 'house_number', 'airport']:
-                if lv in geo:
-                    loc.append(geo[lv])
+                if lv in geo['value']:
+                    loc.append(geo['value'][lv])
             if loc:
                 res.append(','.join(loc))
         return res
