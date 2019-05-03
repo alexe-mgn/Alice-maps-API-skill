@@ -117,6 +117,8 @@ def dialog(data):
                                     MapsHandler(bbox=res[0].rect).get(),
                                     life=-1)
                     user.state = -3
+            else:
+                resp.msg('Я немного не понимаю, что это за место такое')
         user.delay_up()
 
     if user.state == -3:
