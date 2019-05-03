@@ -19,11 +19,26 @@ class DialogsApi:
 
     @staticmethod
     def get_images():
-        return [[e['id'], e['origUrl']] for e in
+        return [e['id'] for e in
                 requests.get(DIALOGS_API_SKILL_URL,
                              headers={
                                  'Authorization': 'OAuth {}'.format(OAuth)
                              }).json()['images']]
+
+    @staticmethod
+    def remove_image(mid):
+        resp = requests.delete(DIALOGS_API_SKILL_URL + str(mid).strip('/'),
+                               headers={
+                                   'Authorization': 'OAuth {}'.format(OAuth)
+                               }).json()
+        return 'result' in resp and resp['result'] == 'ok'
+
+    @classmethod
+    def remove_all_images(cls):
+        for i in cls.get_images():
+            if not cls.remove_image(i):
+                return False
+        return True
 
     @staticmethod
     def upload_image_source(source):
@@ -31,22 +46,20 @@ class DialogsApi:
         resp = requests.post(DIALOGS_API_SKILL_URL, files={'file': source},
                              headers={
                                  'Authorization': 'OAuth {}'.format(OAuth),
-                                 'Content-Type': 'multipart/form-data'
                              }).json()
         logging.info('GOT ' + dump_json(resp))
         if 'image' in resp:
-            return resp['image']['id'], resp['image']['origUrl']
+            return resp['image']['id']
         return False
 
     @staticmethod
     def upload_image_url(url):
         logging.info('UPLOADING IMAGE FROM ' + url)
-        resp = requests.post(DIALOGS_API_SKILL_URL, data={"url": url},
+        resp = requests.post(DIALOGS_API_SKILL_URL, json={'url': url},
                              headers={
                                  'Authorization': 'OAuth {}'.format(OAuth),
-                                 'Content-Type': 'application/json'
                              }).json()
         logging.info('GOT ' + dump_json(resp))
         if 'image' in resp:
-            return resp['image']['id'], resp['image']['origUrl']
+            return resp['image']['id']
         return False

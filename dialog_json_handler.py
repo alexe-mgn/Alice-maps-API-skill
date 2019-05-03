@@ -29,7 +29,7 @@ class DictHandler:
 
 class Button(DictHandler):
 
-    def __init__(self, storage, bid, text, url=None, life=1, payload=None):
+    def __init__(self, storage, bid, text, attach=True, url=None, life=1, payload=None):
         super().__init__()
         self.storage = storage
         self.id = bid
@@ -37,7 +37,7 @@ class Button(DictHandler):
         self.data = {
             'title': text,
             'payload': {} if not payload else payload,
-            'hide': True
+            'hide': not attach
         }
         if url:
             self.data['url'] = url
@@ -113,6 +113,11 @@ class Storage(DictHandler):
         self.response['response']['buttons'] = bts
 
     @property
+    def type(self):
+        # ButtonPressed, SimpleUtterance
+        return self.request['request']['type']
+
+    @property
     def state(self):
         return self['state']
 
@@ -148,8 +153,8 @@ class Storage(DictHandler):
         else:
             logging.info('STATE WAS NOT INIT, leaving delay at ' + str(self.delay))
 
-    def add_button(self, bid, text, url=None, life=1, payload=None):
-        btn = Button(self, bid, text, url=url, life=life, payload=payload)
+    def add_button(self, bid, text, attach=True, url=None, life=1, payload=None):
+        btn = Button(self, bid, text, attach=attach, url=url, life=life, payload=payload)
         self['buttons'].append(btn)
 
     def remove_button(self, bid):
@@ -161,11 +166,11 @@ class Storage(DictHandler):
 
     @property
     def command(self):
-        return self.request['request']['command']
+        return self.request['request'].get('command', None)
 
     @property
     def text(self):
-        return self.request['request']['original_utterance']
+        return self.request['request'].get('original_utterance', None)
 
     @property
     def tokens(self):
@@ -236,7 +241,3 @@ class Response(DictHandler):
     def msg(self, text):
         old = self['response'].get('text', '')
         self['response']['text'] = old + ('\n' if old else '') + text
-
-    @property
-    def buttons(self):
-        return self['response']['buttons']

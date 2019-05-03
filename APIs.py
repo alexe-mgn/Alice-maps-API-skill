@@ -78,7 +78,7 @@ class Toponym:
         return None
 
 
-class MapsHandler:
+class MapsApi:
     pars = {
         'l': 'map',
     }
@@ -294,9 +294,10 @@ class MapsHandler:
             self.add_poly(curves=[list(points)], **kwargs)
 
 
-class GeoHandler:
+class GeoApi:
 
-    def __init__(self, **kwargs):
+    def __init__(self, geocode, **kwargs):
+        kwargs['geocode'] = geocode
         for k, v in kwargs.items():
             if isinstance(v, str) or hasattr(v, '__int__'):
                 pass
@@ -338,7 +339,7 @@ class GeoHandler:
         return json.dumps(self.data, indent=2, ensure_ascii=False)
 
 
-class SearchHandler:
+class SearchApi:
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             if isinstance(v, str) or hasattr(v, '__int__'):
