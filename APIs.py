@@ -2,8 +2,6 @@ import requests
 import json
 from io import BytesIO
 
-# import pygame
-
 from parsing import Parse, Str
 from geometry import GeoRect
 
@@ -96,7 +94,7 @@ class StaticMapsHandler:
             pars[k] = v
         return pars
 
-    def get_rect(self, rect, **kwargs):
+    def get_rect(self, rect, surface=False, **kwargs):
         """Fetch image from API"""
         pars = self.overriden_pars(**kwargs)
         pars['bbox'] = GeoRect(rect)
@@ -108,7 +106,11 @@ class StaticMapsHandler:
             print(resp.content)
             raise
         mf = BytesIO(resp.content)
-        return mf
+        if surface:
+            import pygame
+            return pygame.image.load(mf, '_.png')
+        else:
+            return mf
 
     def get(self, surface=True, **kwargs):
         pars = self.overriden_pars(**kwargs)
@@ -120,15 +122,20 @@ class StaticMapsHandler:
             print(resp.content)
             raise
         mf = BytesIO(resp.content)
-        return mf
+        if surface:
+            import pygame
+            return pygame.image.load(mf, '_.png')
+        else:
+            return mf
 
-    # def show(self, **kwargs):
-    #     image = self.get(**kwargs)
-    #     screen = pygame.display.set_mode(image.get_size())
-    #     screen.blit(image, (0, 0))
-    #     pygame.display.flip()
-    #     while pygame.event.wait().type != pygame.QUIT:
-    #         pass
+    def show(self, **kwargs):
+        import pygame
+        screen = pygame.display.set_mode(image.get_size())
+        image = self.get(**kwargs)
+        screen.blit(image, (0, 0))
+        pygame.display.flip()
+        while pygame.event.wait().type != pygame.QUIT:
+            pass
 
     def include_view(self, obj):
         if hasattr(obj, 'rect'):

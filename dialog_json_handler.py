@@ -154,6 +154,8 @@ class Request(DictHandler):
 
     @property
     def tokens(self):
+        # CHECK DIALOGS PROTOCOL
+        # MAY NOT EXIST
         return self['request']['nlu']['tokens']
 
     def entity(self, t=None):

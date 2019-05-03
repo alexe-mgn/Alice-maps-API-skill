@@ -64,10 +64,10 @@ def dialog(data):
         if user.delay == 0:
             resp.msg('Прекрасно! Как вас зовут?')
         else:
-            fio = user.entity(t='fio')
-            if fio and 'first_name' in fio[0]:
-                logging.info('NAME RECOGNIZED ' + dump_json(fio))
-                storage['name'] = fio[0]['first_name']
+            fios = user.entity(t='fio')
+            if fios and 'first_name' in fios[0]['value']:
+                logging.info('NAME RECOGNIZED ' + dump_json(fios))
+                storage['name'] = fios[0]['value']['first_name']
                 user.state = 2
             else:
                 resp.msg('Простите, я не расслышала вашего имени. Повторите, пожалуйста.')
