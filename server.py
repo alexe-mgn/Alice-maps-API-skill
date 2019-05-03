@@ -1,6 +1,6 @@
 from flask import Flask, request
 from settings import logging, dump_json
-from dialog_json_handler import Storage, Response
+from dialog_json_handler import Storage, Response, Button, Card
 from parser import sentence_agreement
 from APIs import GeoApi, MapsApi
 from dialogs_API import DialogsApi
@@ -118,9 +118,10 @@ def dialog(data):
                         user['source'] = res[0].pos
                         ma = MapsApi(bbox=res[0].rect)
                         ma.add_marker(res[0].pos)
-                        user.add_button('show_place_agreement',
-                                        'Показать карту',
-                                        ma.get_url(static=False))
+                        user.add_button(Button(user,
+                                               'show_place_agreement',
+                                               'Показать карту',
+                                               url=ma.get_url(static=False)))
                         user.state = -3
                 else:
                     resp.msg('Я немного не понимаю, что это за место такое')
@@ -168,9 +169,10 @@ def dialog(data):
                         user['target'] = r
                         ma = MapsApi(bbox=res[0].rect)
                         ma.add_marker(res[0].pos)
-                        user.add_button('show_place_agreement',
-                                        'Показать карту',
-                                        ma.get_url(static=False))
+                        user.add_button(Button(user,
+                                               'show_place_agreement',
+                                               'Показать карту',
+                                               url=ma.get_url(static=False)))
                         user.state = -4
             user.delay_up()
 
@@ -191,6 +193,22 @@ def dialog(data):
                 else:
                     resp.msg('Я вас немного не поняла')
             user.delay_up()
+
+        if user.state == 5:
+            ma = MapsApi()
+            ma.include_view(user['source'])
+            ma.include_view(user['target'])
+            ma.add_marker(user['source'], 'pm2am')
+            ma.add_marker(user['target'], 'pm2bm')
+
+            mid = DialogsApi.upload_image_url(ma.get_url(static=True))
+            user.set_image('temp', mid)
+            
+            card = Card(user, 'Итоговый путь', mid)
+            card['button'] = Button(user, None, 'Показать карту', False, url=ma.get_url(static=False), life=-1)
+            user.add_card(card)
+            resp.msg('Маршрут построен')
+
     elif user.type == 'ButtonPressed':
         resp.text = 'Выполняю'
 

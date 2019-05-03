@@ -1,5 +1,6 @@
 from flask import jsonify
 from settings import logging, dump_json
+from dialogs_API import DialogsApi
 
 
 class DictHandler:
@@ -58,7 +59,7 @@ class Button(DictHandler):
         pass
 
 
-class Card:
+class Card(DictHandler):
 
     def __init__(self, storage, text, image, life=1):
         super().__init__()
@@ -209,14 +210,22 @@ class Storage(DictHandler):
             if i.id == bid:
                 return i
 
-    def add_button(self, bid, text, attach=True, url=None, life=1, payload=None):
-        btn = Button(self, bid, text, attach=attach, url=url, life=life, payload=payload)
-        self.buttons.append(btn)
+    def add_button(self, button):
+        self.buttons.append(button)
+
+    def add_card(self, card):
+        self.cards.append(card)
 
     def remove_button(self, bid):
         for i in self.buttons.copy():
             if i.id == bid:
                 self.buttons.remove(i)
+
+    def set_image(self, key, mid):
+        if mid:
+            if mid in self.images.values():
+                DialogsApi.remove_image(self.images[key])
+            self.images[key] = mid
 
     # REQUEST
 
