@@ -38,7 +38,7 @@ def dialog(data):
         # delay НЕ ПО НАЗНАЧЕНИЮ!
         if user.delay == 0:
             resp.msg('Приветствую! Не хотите поиграть в...\nПутешествие?')
-            user.delay_up()
+            user.init_state(True)
         elif user.delay == 1:
             a, d = sentence_agreement(user.text)
             if a > d:
@@ -62,6 +62,7 @@ def dialog(data):
 
     if user.state == 1:
         if user.delay == 0:
+            user.init_state()
             resp.msg('Прекрасно! Как вас зовут?')
         else:
             fios = user.entity(t='fio')
@@ -75,6 +76,7 @@ def dialog(data):
 
     if user.state == 2:
         if user.delay == 0:
+            user.init_state()
             resp.msg('Хотите узнать правила игры?')
         else:
             a, d = sentence_agreement(user.text)
@@ -94,6 +96,7 @@ def dialog(data):
 
     if user.state == 3:
         if user.delay == 0:
+            user.init_state()
             resp.msg('Откуда начнём?')
         else:
             geo = user.geo_entity()
@@ -103,7 +106,6 @@ def dialog(data):
                     resp.msg('Простите, я такого места не знаю, попробуйте ещё раз')
                 else:
                     resp.msg('Вы это место иммели ввиду?')
-
         user.delay_up()
 
     storage.post_step()

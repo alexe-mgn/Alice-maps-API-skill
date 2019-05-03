@@ -49,6 +49,7 @@ class Storage(DictHandler):
             'id': req['session']['user_id'],
             'buttons': [],
             'state': 0,
+            'state_init': False,
             'delay': 0
         }
 
@@ -88,6 +89,16 @@ class Storage(DictHandler):
             logging.info('STATE SWITCHED ' + str(st))
             self['delay'] = 0
             self['state'] = st
+        self['state_init'] = False
+
+    @property
+    def state_init(self):
+        return self['state_init']
+
+    def init_state(self, delay_up=False):
+        self['state_init'] = True
+        if delay_up:
+            self['delay'] += 1
 
     @property
     def delay(self):
@@ -98,8 +109,11 @@ class Storage(DictHandler):
         self['delay'] = d
 
     def delay_up(self):
-        self['delay'] += 1
-        logging.info('DELAY UP: ' + str(self.delay))
+        if self.state_init:
+            self['delay'] += 1
+            logging.info('DELAY UP: ' + str(self.delay))
+        else:
+            logging.info('STATE WAS NOT INIT, leaving delay at ' + str(self.delay))
 
     def add_button(self, text, one_time=True, url=None, payload=None):
         pass
@@ -132,6 +146,13 @@ class Request(DictHandler):
     @state.setter
     def state(self, val):
         self.storage.state = val
+
+    @property
+    def state_init(self):
+        return self.storage.state_init
+
+    def init_state(self, delay_up=False):
+        self.storage.init_state(delay_up)
 
     @property
     def delay(self):
