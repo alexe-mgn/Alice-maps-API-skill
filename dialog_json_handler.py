@@ -27,6 +27,29 @@ class DictHandler:
         return self.data
 
 
+class Button(DictHandler):
+
+    def __init__(self, storage, bid, text, url=None, life=1, payload=None):
+        super().__init__()
+        self.storage = storage
+        self.id = bid
+        self.life = life
+        self.data = {
+            'text': text,
+            'payload': {} if not payload else payload
+        }
+        if url:
+            self.data['url'] = url
+
+    @property
+    def alive(self):
+        return self.life != 0
+
+    def send(self):
+        self.data['life'] -= 1
+        return self.data
+
+
 class Storage(DictHandler):
     storage = {}
 
@@ -43,7 +66,7 @@ class Storage(DictHandler):
 
     def __first_init(self, req):
         logging.info('NEW STORAGE INSTANCE ' + str(req['session']['user_id']))
-        self.request = None
+        self.request = {}
         self.response = None
         self.data = {
             'id': req['session']['user_id'],
@@ -55,6 +78,7 @@ class Storage(DictHandler):
 
     def __init__(self, req):
         super().__init__()
+        self.request = req
 
     @classmethod
     def remove(cls, uid):
@@ -77,7 +101,13 @@ class Storage(DictHandler):
         pass
 
     def post_step(self):
-        pass
+        bts = []
+        for n, i in enumerate(self['buttons'].copy()):
+            if i.alive:
+                bts.append(i.send())
+            else:
+                del self['buttons'][n]
+        self.response['response']['buttons'] = bts
 
     @property
     def state(self):
@@ -118,72 +148,27 @@ class Storage(DictHandler):
     def add_button(self, text, one_time=True, url=None, payload=None):
         pass
 
-
-class Request(DictHandler):
-
-    def __init__(self, data):
-        super().__init__(data)
-        logging.info('INPUT ' + dump_json(self.data))
-        self.storage = Storage(data)
-        self.storage.request = self
-
-    @property
-    def id(self):
-        return self.storage.id
-
-    @id.setter
-    def id(self, n):
-        self.storage.id = n
-
-    @property
-    def new(self):
-        return bool(self['session']['new'])
-
-    @property
-    def state(self):
-        return self.storage.state
-
-    @state.setter
-    def state(self, val):
-        self.storage.state = val
-
-    @property
-    def state_init(self):
-        return self.storage.state_init
-
-    def init_state(self, delay_up=False):
-        self.storage.init_state(delay_up)
-
-    @property
-    def delay(self):
-        return self.storage.delay
-
-    @delay.setter
-    def delay(self, d):
-        self.storage.delay = d
-
-    def delay_up(self):
-        self.storage.delay_up()
+    # REQUEST
 
     @property
     def command(self):
-        return self['request']['command']
+        return self.request['request']['command']
 
     @property
     def text(self):
-        return self['request']['original_utterance']
+        return self.request['request']['original_utterance']
 
     @property
     def tokens(self):
         # CHECK DIALOGS PROTOCOL
         # MAY NOT EXIST
-        return self['request']['nlu']['tokens']
+        return self.request['request']['nlu']['tokens']
 
     def entity(self, t=None):
         res = []
         if not t:
-            return self['request']['nlu']['entities']
-        for i in self['request']['nlu']['entities']:
+            return self.request['request']['nlu']['entities']
+        for i in self.request['request']['nlu']['entities']:
             if i['type'].lower().split('.')[-1] == t.lower():
                 res.append(i)
         return res
@@ -212,7 +197,7 @@ class Response(DictHandler):
             'version': data['version'],
             'response': {
                 'end_session': False,
-                'buttons': self.storage['buttons']
+                'buttons': []
             }
         }
 
@@ -225,7 +210,6 @@ class Response(DictHandler):
         self['response']['end_session'] = bool(end)
 
     def send(self):
-        self.storage.post_step()
         logging.info('SENDING ' + dump_json(self.data))
         data = jsonify(self.data)
         if self.end:

@@ -10,7 +10,8 @@ SEARCH_API_KEY = 'dda3ddba-c9ea-4ead-9010-f43fbc15c6e3'
 SEARCH_API_URL = 'https://search-maps.yandex.ru/v1/?apikey={}&lang=ru_RU'.format(SEARCH_API_KEY)
 
 GEOCODE_API_URL = "http://geocode-maps.yandex.ru/1.x/?format=json"
-STATIC_MAPS_API_URL = "http://static-maps.yandex.ru/1.x/"
+STATIC_MAPS_API_URL = "http://static-maps.yandex.ru/1.x/?"
+MAPS_URL = "http://yandex.ru/maps?"
 
 
 class Toponym:
@@ -77,16 +78,28 @@ class Toponym:
         return None
 
 
-class StaticMapsHandler:
+class MapsHandler:
     pars = {
         'l': 'map',
     }
 
-    def __init__(self, pos_mode='bbox'):
-        self.pars = self.pars.copy()
-        self.pars['bbox'] = None
+    def __init__(self, pos_mode='bbox', **kwargs):
+        self.pars = self.overriden_pars(**kwargs)
         self.mode_init = False
+        self.pars['bbox'] = None
+        self.pars.pop('ll', None)
+        self.pars.pop('spn', None)
         self.pos_mode = pos_mode
+        if kwargs:
+            if pos_mode == 'bbox' and 'bbox' in kwargs:
+                self.mode_init = True
+                self.pars['bbox'] = kwargs['bbox']
+            elif pos_mode == 'spn':
+                if 'll' in kwargs:
+                    self.mode_init = True
+                    self.pars['ll'] = kwargs['ll']
+                if 'spn' in kwargs:
+                    self.pars['spn'] = kwargs['spn']
 
     def overriden_pars(self, **kwargs):
         pars = self.pars.copy()
@@ -94,44 +107,60 @@ class StaticMapsHandler:
             pars[k] = v
         return pars
 
-    def get_rect(self, rect, surface=False, **kwargs):
-        """Fetch image from API"""
+    def get_rect(self, rect, url=True, surface=False, **kwargs):
         pars = self.overriden_pars(**kwargs)
-        pars['bbox'] = GeoRect(rect)
-        dct = Str.query(pars)
-        resp = requests.get(STATIC_MAPS_API_URL, params='&'.join(['{}={}'.format(k, v) for k, v in dct.items()]))
-        try:
-            resp.raise_for_status()
-        except Exception:
-            print(resp.content)
-            raise
-        mf = BytesIO(resp.content)
-        if surface:
-            import pygame
-            return pygame.image.load(mf, '_.png')
+        if url:
+            rect = GeoRect(rect)
+            pars.pop('bbox', None)
+            pars['ll'] = rect.center
+            pars['spn'] = rect.size
+            dct = Str.query(pars)
+            return MAPS_URL + '&'.join(['{}={}'.format(k, v) for k, v in dct.items()])
         else:
-            return mf
+            pars['bbox'] = GeoRect(rect)
+            dct = Str.query(pars)
+            resp = requests.get(STATIC_MAPS_API_URL, params='&'.join(['{}={}'.format(k, v) for k, v in dct.items()]))
+            try:
+                resp.raise_for_status()
+            except Exception:
+                print(resp.content)
+                raise
+            mf = BytesIO(resp.content)
+            if surface:
+                import pygame
+                return pygame.image.load(mf, '_.png')
+            else:
+                return mf
 
-    def get(self, surface=True, **kwargs):
+    def get(self, url=True, surface=False, **kwargs):
         pars = self.overriden_pars(**kwargs)
         dct = Str.query(pars)
-        resp = requests.get(STATIC_MAPS_API_URL, params='&'.join(['{}={}'.format(k, v) for k, v in dct.items()]))
-        try:
-            resp.raise_for_status()
-        except Exception:
-            print(resp.content)
-            raise
-        mf = BytesIO(resp.content)
-        if surface:
-            import pygame
-            return pygame.image.load(mf, '_.png')
+        if url:
+            rect = pars.pop('bbox', None)
+            if rect is not None:
+                pars['ll'] = rect.center
+                pars['spn'] = rect.size
+            dct = Str.query(pars)
+            return MAPS_URL + '&'.join(['{}={}'.format(k, v) for k, v in dct.items()])
         else:
-            return mf
+            resp = requests.get(STATIC_MAPS_API_URL, params='&'.join(['{}={}'.format(k, v) for k, v in dct.items()]))
+            try:
+                resp.raise_for_status()
+            except Exception:
+                print(resp.content)
+                raise
+            mf = BytesIO(resp.content)
+            if surface:
+                import pygame
+                return pygame.image.load(mf, '_.png')
+            else:
+                return mf
 
     def show(self, **kwargs):
         import pygame
-        screen = pygame.display.set_mode(image.get_size())
+        screen = pygame.display.set_mode((650, 400))
         image = self.get(**kwargs)
+        screen = pygame.display.set_mode((650, 400))
         screen.blit(image, (0, 0))
         pygame.display.flip()
         while pygame.event.wait().type != pygame.QUIT:

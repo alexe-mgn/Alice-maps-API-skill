@@ -1,8 +1,8 @@
 from flask import Flask, request
 from settings import logging, dump_json
-from dialog_json_handler import Storage, Request, Response
+from dialog_json_handler import Storage, Response
 from parser import sentence_agreement
-from APIs import GeoHandler
+from APIs import GeoHandler, MapsHandler
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -26,13 +26,14 @@ def request_handler():
 
 
 def dialog(data):
-    storage = Storage(data)
-    user = Request(data)
+    user = Storage(data)
     resp = Response(data)
     logging.info('CONTINUE ' + str(user.id))
+    logging.info('INPUT ' + dump_json(user.request))
     logging.info('STATE ' + str(user.state) + ' DELAY ' + str(user.delay))
-    logging.info('STORAGE ' + dump_json(storage.data))
-    storage.pre_step()
+    logging.info('STORAGE ' + dump_json(user.data))
+
+    user.pre_step()
 
     if user.state == 0:
         # delay НЕ ПО НАЗНАЧЕНИЮ!
@@ -68,7 +69,8 @@ def dialog(data):
             fios = user.entity(t='fio')
             if fios and 'first_name' in fios[0]['value']:
                 logging.info('NAME RECOGNIZED ' + dump_json(fios))
-                storage['name'] = fios[0]['value']['first_name']
+                name = fios[0]['value']['first_name']
+                user['name'] = name[0].upper() + name[1:]
                 resp.msg('Очень приятно, а я - Алиса')
                 user.state = 2
             else:
@@ -78,7 +80,7 @@ def dialog(data):
     if user.state == 2:
         if user.delay == 0:
             user.init_state()
-            resp.msg('Хотите узнать правила игры, {}?'.format(storage['name']))
+            resp.msg('Хотите узнать правила игры, {}?'.format(user['name']))
         else:
             a, d = sentence_agreement(user.text)
             if a > d:
@@ -102,12 +104,14 @@ def dialog(data):
         else:
             geo = user.geo_entity()
             if geo:
-                res = GeoHandler(geocode=','.join(geo[0]))
+                res = GeoHandler(geocode=geo[0])
+                logging.info('USER GEO ' + dump_json(res.data))
                 if not res:
                     resp.msg('Простите, я такого места не знаю, попробуйте ещё раз')
                 else:
                     resp.msg('Вы это место иммели ввиду?')
+                    resp.msg(MapsHandler(bbox=res[0].rect).get())
         user.delay_up()
 
-    storage.post_step()
+    user.post_step()
     return resp
