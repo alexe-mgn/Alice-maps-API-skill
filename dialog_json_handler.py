@@ -5,7 +5,11 @@ from settings import logging, dump_json
 class DictHandler:
 
     def __init__(self, data=None):
-        self.data = data
+        if hasattr(self, 'data'):
+            if data is not None:
+                self.data = data
+        else:
+            self.data = {}
 
     def __getitem__(self, item):
         return self.data[item]
@@ -28,26 +32,27 @@ class Storage(DictHandler):
         user_id = data['session']['user_id']
         if user_id in cls.storage:
             obj = cls.storage[user_id]
-            obj.pre_step()
             return obj
         else:
             new = super().__new__(cls)
             cls.storage[user_id] = new
-            new.id = user_id
             logging.info('NEW STORAGE INSTANCE ' + str(user_id))
-            new.pre_step()
+            new.__first_init(data)
             return new
 
-    def __init__(self, req):
-        super().__init__()
+    def __first_init(self, req):
         self.request = None
         self.response = None
         self.data = {
-            'id': 0,
+            'id': req['session']['user_id'],
             'buttons': [],
             'state': 0,
             'delay': 0
         }
+
+    def __init__(self, req):
+        super().__init__()
+        self.pre_step()
 
     @property
     def id(self):
@@ -55,7 +60,12 @@ class Storage(DictHandler):
 
     @id.setter
     def id(self, n):
-        self['id'] = n
+        oid = self.id
+        if n != oid:
+            if oid not in self.storage:
+                self['id'] = n
+                self.storage[n] = self
+                del self.storage[n]
 
     def pre_step(self):
         pass
