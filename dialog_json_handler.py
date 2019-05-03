@@ -102,11 +102,11 @@ class Storage(DictHandler):
 
     def post_step(self):
         bts = []
-        for n, i in enumerate(self['buttons'].copy()):
+        for i in self['buttons'].copy():
             if i.alive:
                 bts.append(i.send())
             else:
-                del self['buttons'][n]
+                self['buttons'].remove(i)
         self.response['response']['buttons'] = bts
 
     @property
@@ -145,8 +145,14 @@ class Storage(DictHandler):
         else:
             logging.info('STATE WAS NOT INIT, leaving delay at ' + str(self.delay))
 
-    def add_button(self, text, one_time=True, url=None, payload=None):
-        pass
+    def add_button(self, bid, text, url=None, life=1, payload=None):
+        btn = Button(self, bid, text, url=url, life=life, payload=payload)
+        self['buttons'].append(btn)
+
+    def remove_button(self, bid):
+        for i in self['buttons'].copy():
+            if i.id == bid:
+                self['buttons'].remove(i)
 
     # REQUEST
 
@@ -231,11 +237,3 @@ class Response(DictHandler):
     @property
     def buttons(self):
         return self['response']['buttons']
-
-    def add_button(self, text, url=None, payload=None):
-        d = {'text': text}
-        if url is not None:
-            d['url'] = str(url)
-        if payload is not None:
-            d['payload'] = str(payload)
-        self['response']['buttons'] += d

@@ -110,7 +110,72 @@ def dialog(data):
                     resp.msg('Простите, я такого места не знаю, попробуйте ещё раз')
                 else:
                     resp.msg('Вы это место иммели ввиду?')
-                    resp.msg(MapsHandler(bbox=res[0].rect).get())
+                    user['source'] = res[0].pos
+                    user.add_button('show_place_agreement',
+                                    'Показать карту',
+                                    MapsHandler(bbox=res[0].rect).get(),
+                                    life=-1)
+                    user.state = -3
+        user.delay_up()
+
+    if user.state == -3:
+        if user.delay == 0:
+            user.init_state()
+        else:
+            a, d = sentence_agreement(user.text)
+            if a > d:
+                user.state = 4
+                resp.msg('Хорошо')
+            elif d > a:
+                user.state = 3
+                resp.msg('Нет? Ну как скажете.')
+                del user['source']
+            else:
+                resp.msg('Я вас немного не поняла')
+        user.delay_up()
+
+    if user.state == 4:
+        if user.delay == 0:
+            user.init_state()
+            resp.msg('Выбирайте, куда будем идти.')
+        else:
+            geo = user.geo_entity()
+            if geo:
+                res = GeoHandler(geocode=geo[0])
+                logging.info('USER GEO ' + dump_json(res.data))
+                if not res:
+                    resp.msg('Простите, я такого места не знаю, попробуйте ещё раз')
+                else:
+                    resp.msg('Вы это место иммели ввиду?')
+                    r = res[0].rect
+                    c = r.center
+                    if r.w < .1:
+                        r.w = .1
+                    if r.h < .1:
+                        r.h = .1
+                    r.center = c
+                    user['target'] = r
+                    user.add_button('show_place_agreement',
+                                    'Показать карту',
+                                    MapsHandler(bbox=res[0].rect).get(),
+                                    life=-1)
+                    user.state = -4
+        user.delay_up()
+
+    if user.state == -4:
+        if user.delay == 0:
+            user.init_state()
+        else:
+            a, d = sentence_agreement(user.text)
+            if a > d:
+                user.state = 5
+                resp.msg('Хорошо')
+            elif d > a:
+                user.state = 4
+                resp.msg('Нет? Ну как скажете.')
+                del user['target']
+            else:
+                resp.msg('Я вас немного не поняла')
         user.delay_up()
 
     user.post_step()
