@@ -27,14 +27,15 @@ class Storage(DictHandler):
     def __new__(cls, data):
         user_id = data['session']['user_id']
         if user_id in cls.storage:
-            logging.info('CONTINUE with ' + str(user_id))
             obj = cls.storage[user_id]
             obj.pre_step()
             return obj
         else:
-            logging.info('NEW instance ' + str(user_id))
             new = super().__new__(cls)
             cls.storage[user_id] = new
+            new.id = user_id
+            logging.info('NEW STORAGE INSTANCE ' + str(user_id))
+            new.pre_step()
             return new
 
     def __init__(self, req):
@@ -42,10 +43,19 @@ class Storage(DictHandler):
         self.request = None
         self.response = None
         self.data = {
+            'id': 0,
             'buttons': [],
             'state': 0,
             'delay': 0
         }
+
+    @property
+    def id(self):
+        return self.get('id', 0)
+
+    @id.setter
+    def id(self, n):
+        self['id'] = n
 
     def pre_step(self):
         pass

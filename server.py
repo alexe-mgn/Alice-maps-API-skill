@@ -27,6 +27,9 @@ def dialog(data):
     storage = Storage(data)
     user = Request(data)
     resp = Response(data)
+    logging.info('CONTINUE ' + str(user_id))
+    logging.info('STATE ' + str(obj.state) + ' DELAY ' + str(obj.delay))
+    logging.info('STORAGE ' + dump_json(obj.data))
 
     if user.state == 0:
         if user.delay == 0:
