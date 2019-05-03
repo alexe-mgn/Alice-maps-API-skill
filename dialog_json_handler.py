@@ -52,7 +52,6 @@ class Storage(DictHandler):
 
     def __init__(self, req):
         super().__init__()
-        self.pre_step()
 
     @property
     def id(self):
@@ -105,6 +104,14 @@ class Request(DictHandler):
         logging.info('INPUT ' + dump_json(self.data))
         self.storage = Storage(data)
         self.storage.request = self
+
+    @property
+    def id(self):
+        return self.storage.id
+
+    @id.setter
+    def id(self, n):
+        self.storage.id = n
 
     @property
     def new(self):

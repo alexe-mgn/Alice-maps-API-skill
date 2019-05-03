@@ -27,9 +27,10 @@ def dialog(data):
     storage = Storage(data)
     user = Request(data)
     resp = Response(data)
-    logging.info('CONTINUE ' + str(user_id))
-    logging.info('STATE ' + str(obj.state) + ' DELAY ' + str(obj.delay))
-    logging.info('STORAGE ' + dump_json(obj.data))
+    logging.info('CONTINUE ' + str(user.id))
+    logging.info('STATE ' + str(user.state) + ' DELAY ' + str(user.delay))
+    logging.info('STORAGE ' + dump_json(storage.data))
+    storage.pre_step()
 
     if user.state == 0:
         if user.delay == 0:
@@ -45,4 +46,5 @@ def dialog(data):
         else:
             resp.end = True
 
+    storage.post_step()
     return resp
