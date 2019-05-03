@@ -46,7 +46,7 @@ class Button(DictHandler):
         return self.life != 0
 
     def send(self):
-        self.data['life'] -= 1
+        self.life -= 1
         return self.data
 
 
