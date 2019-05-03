@@ -136,8 +136,10 @@ def dialog(data):
                     resp.msg('Хорошо')
                 elif d > a:
                     user.state = 3
+                    user.init_state()
                     resp.msg('Нет? Ну как скажете.')
                     del user['source']
+                    resp.msg('Откуда начнём?')
                 else:
                     resp.msg('Я вас немного не поняла')
             user.delay_up()
@@ -184,6 +186,8 @@ def dialog(data):
                     user.state = 4
                     resp.msg('Нет? Ну как скажете.')
                     del user['target']
+                    user.init_state()
+                    resp.msg('Выбирайте, куда будем идти.')
                 else:
                     resp.msg('Я вас немного не поняла')
             user.delay_up()
