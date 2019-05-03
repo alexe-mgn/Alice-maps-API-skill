@@ -5,10 +5,9 @@ from settings import logging, dump_json
 class DictHandler:
 
     def __init__(self, data=None):
-        if hasattr(self, 'data'):
-            if data is not None:
-                self.data = data
-        else:
+        if data is not None:
+            self.data = data
+        elif not hasattr(self, 'data'):
             self.data = {}
 
     def __getitem__(self, item):
@@ -99,8 +98,8 @@ class Storage(DictHandler):
         self['delay'] = d
 
     def delay_up(self):
-        logging.info('DELAY UP: ' + str(self.delay))
         self['delay'] += 1
+        logging.info('DELAY UP: ' + str(self.delay))
 
     def add_button(self, text, one_time=True, url=None, payload=None):
         pass
