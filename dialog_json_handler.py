@@ -162,7 +162,7 @@ class Storage(DictHandler):
 
     @property
     def state(self):
-        return self.state
+        return self._state
 
     @state.setter
     def state(self, st):
