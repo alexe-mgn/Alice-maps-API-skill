@@ -116,7 +116,7 @@ def dialog(data):
                         user.add_button('show_place_agreement',
                                         'Показать карту',
                                         url=MapsApi(bbox=res[0].rect).get_url(),
-                                        attach=True, life=1)
+                                        life=-1)
                         user.state = -3
                 else:
                     resp.msg('Я немного не понимаю, что это за место такое')
