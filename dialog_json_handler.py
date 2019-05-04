@@ -228,6 +228,12 @@ class Storage(DictHandler):
                 DialogsApi.remove_image(self.images[key])
             self.images[key] = mid
 
+    def get_image(self, key):
+        for k, v in self.images.items():
+            if k == key:
+                return v
+        return None
+
     # REQUEST
 
     @property
@@ -237,6 +243,10 @@ class Storage(DictHandler):
     @property
     def text(self):
         return self.request['request'].get('original_utterance', None)
+
+    @property
+    def payload(self):
+        return self.request['request']['payload']
 
     @property
     def tokens(self):

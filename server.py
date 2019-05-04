@@ -29,6 +29,16 @@ def request_handler():
     return resp.send()
 
 
+def upload(storage, key, url):
+    logging.info('ASYNC UPLOAD')
+    mid = DialogsApi.upload_image_url(url)
+    if mid:
+        storage.set_image(key, mid)
+    else:
+        logging.info('UPLOAD FAILED')
+    logging.info('ASYNC FINISHED')
+
+
 def dialog(data):
     logging.info('-----------DIALOG-----------')
     if data['session']['new']:
@@ -83,39 +93,36 @@ def dialog(data):
                     if api_res:
                         logging.info('RECOGNIZED {} GEO '.format(len(api_res)) + dump_json(api_res.data))
                         user['context'] = 'search'
-                        resp.msg('Мне удалось найти несколько вариантов.')
+                        resp.msg('Вот что мне удалось найти:\n')
                         mp = MapsApi()
                         for n, i in enumerate(api_res, 1):
                             resp.msg('{} - {}'.format(n, i.formatted_address))
                             mp.include_view(i.rect)
                             mp.add_marker(i.pos, 'pm2rdm' + str(n))
 
-                        btn = Button(user, None, 'Показать карту', url=mp.get_url(static=False))
-
-                        def _upload():
-                            logging.info('ASYNC UPLOAD')
-                            mid = DialogsApi.upload_image_url(mp.get_url(static=True))
-                            if mid:
-                                user.set_image('temp', mid)
-                                card = Card(user, resp.text, mid)
-                                card['button'] = btn.send()
-                                user.add_card(card)
-                            else:
-                                logging.info('UPLOAD FAILED')
-                            logging.info('ASYNC FINISHED')
-
-                        threading.Thread(target=_upload).start()
-
+                        threading.Thread(target=upload, args=(user, 'map', mp.get_url(True)))
+                        btn = Button(user, None, 'Показать карту', payload={'action': 'map', 'url': mp.get_url(False)})
                         user.add_button(btn)
                     else:
-                        resp.msg('Простите, не могу понять, о чём вы говорите.')
+                        resp.msg('Простите, не могу понять, о чём вы говорите. Попробуйте ещё раз')
                 else:
                     resp.msg('Простите, не понимаю вашу просьбу')
 
             user.delay_up()
 
     elif user.type == 'ButtonPressed':
-        resp.text = 'Выполняю'
+        if user.payload:
+            pl = user.payload
+            if pl.get('action', None) == 'map':
+                resp.text = 'Показать карту не удалось'
+                btn = Button(user, None, 'Показать на Яндекс.Картах', url=pl['url'])
+                user.add_button(btn)
+                img = user.get_image('map')
+                if img:
+                    card = Card(user, '', img)
+                    user.add_card(card)
+        else:
+            resp.text = 'Выполняю'
 
     user.post_step()
     return resp
