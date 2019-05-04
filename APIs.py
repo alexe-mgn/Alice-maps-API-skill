@@ -5,7 +5,7 @@ from io import BytesIO
 from url_parsing import Parse, Str
 from geometry import GeoRect
 
-from settings import request_error
+from settings import log_request
 
 
 SEARCH_API_KEY = 'dda3ddba-c9ea-4ead-9010-f43fbc15c6e3'
@@ -144,7 +144,7 @@ class MapsApi:
         try:
             resp.raise_for_status()
         except Exception:
-            request_error(resp)
+            log_request(resp)
             raise
         mf = BytesIO(resp.content)
         if surface:
@@ -330,7 +330,7 @@ class GeoApi:
         try:
             resp.raise_for_status()
         except Exception:
-            request_error(resp)
+            log_request(resp)
             raise
         res = resp.json()
         self.data = res['response']['GeoObjectCollection']
@@ -374,7 +374,7 @@ class SearchApi:
         try:
             resp.raise_for_status()
         except Exception:
-            request_error(resp)
+            log_request(resp)
             raise
         res = resp.json()
         if res.get('status', None) == 'error':
@@ -417,7 +417,7 @@ class RaspApi:
         try:
             resp.raise_for_status()
         except Exception:
-            request_error(resp)
+            log_request(resp)
             raise
         return resp.json()
 
@@ -428,6 +428,6 @@ class RaspApi:
         try:
             resp.raise_for_status()
         except Exception:
-            request_error(resp)
+            log_request(resp)
             raise
         return resp.json()
