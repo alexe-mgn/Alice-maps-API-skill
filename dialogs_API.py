@@ -66,6 +66,7 @@ class DialogsApi:
                              headers={
                                  'Authorization': 'OAuth {}'.format(OAuth),
                              })
+        logging.info('request finished, got ' + resp.content.decode('utf-8'))
         log_request(resp)
         resp = resp.json()
         if 'image' in resp:
