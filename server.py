@@ -92,9 +92,13 @@ def dialog(data):
                             mp.include_view(i.rect)
                             mp.add_marker(i.pos, 'pm2rdm' + str(n))
 
+                        def callback(mid):
+                            logging.info('ASSIGNING ' + str(mid))
+                            user.set_image('map', mid)
+
                         pool.apply_async(DialogsApi.upload_image_url,
                                          args=(mp.get_url(True),),
-                                         callback=lambda mid, u=user: u.set_image('map', mid))
+                                         callback=callback)
                         btn = Button(user, None, 'Показать карту', payload={'action': 'map', 'url': mp.get_url(False)})
                         user.add_button(btn)
                     else:
