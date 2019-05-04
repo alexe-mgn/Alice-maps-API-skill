@@ -1,8 +1,8 @@
 from flask import Flask, request
 from settings import logging, dump_json
 from dialog_json_handler import Storage, Response, Button, Card
-from parser import sentence_agreement
-from APIs import GeoApi, MapsApi
+from parser import WordVars, Sentence
+from APIs import GeoApi, MapsApi, SearchApi
 from dialogs_API import DialogsApi
 
 app = Flask(__name__)
@@ -40,177 +40,67 @@ def dialog(data):
 
     if user.type == 'SimpleUtterance':
         if user.state == 0:
-            # delay НЕ ПО НАЗНАЧЕНИЮ!
-            if user.delay == 0:
-                resp.msg('Приветствую! Не хотите поиграть в...\nПутешествие?')
-                user.init_state(True)
-            elif user.delay == 1:
-                a, d = sentence_agreement(user.text)
-                if a > d:
-                    user.state = 1
-                elif d > a:
-                    resp.msg('Ну давайте, будет весело!')
-                    user.delay_up()
-                else:
-                    resp.msg('Не томите меня ответом. Соглашайтесь!')
-            else:
-                a, d = sentence_agreement(user.text)
-                if a > d:
-                    user.state = 1
-                elif d > a:
-                    resp.msg('Как жаль, ну как хотите, до скорой встречи.')
-                    logging.info('FINISHING DIALOG')
-                    resp.end = True
-                else:
-                    resp.msg('Что говорите? Согласны?')
-                user.delay_up()
-
-        if user.state == 1:
             if user.delay == 0:
                 user.init_state()
-                resp.msg('Прекрасно! Как вас зовут?')
+                resp.msg('Приветствую! Меня зовут Алиса, а как ваше имя?')
             else:
                 fios = user.entity(t='fio')
                 if fios and 'first_name' in fios[0]['value']:
                     logging.info('NAME RECOGNIZED ' + dump_json(fios))
                     name = fios[0]['value']['first_name']
                     user['name'] = name[0].upper() + name[1:]
-                    resp.msg('Очень приятно, а я - Алиса')
-                    user.state = 2
+                    resp.msg('Очень приятно.')
+                    user.state = 1
                 else:
                     resp.msg('Простите, я не расслышала вашего имени. Повторите, пожалуйста.')
             user.delay_up()
 
-        if user.state == 2:
+        if user.state == 1:
             if user.delay == 0:
                 user.init_state()
-                resp.msg('Хотите узнать правила игры, {}?'.format(user['name']))
+                resp.msg('Что вы хотите узнать, %s? Я могу:\n'
+                         '- Найти определённое место по названию\n'
+                         '"найди|где ... [В радиусе ... (в км)]"\n'
+                         % (user['name'],))
             else:
-                a, d = sentence_agreement(user.text)
-                if a > d:
-                    resp.msg('Ну чтож\n\n'
-                             'Вы начинаете своё путешествие почти из любой точки Земного шара, '
-                             'а ваша цель - добраться до какого-нибудь другого места.\n'
-                             'Для этого вы можете использовать большинство видов транспорта, либо идти пешком\n'
-                             'В конце я подведу итоги ваших действий, например - затраченное время')
-                    user.state = 3
-                elif d > a:
-                    resp.msg('Как скажете...')
-                    user.state = 3
-                else:
-                    resp.msg('Я не очень поняла, что вы имеете ввиду.')
-            user.delay_up()
+                text = Sentence(user.text)
 
-        if user.state == 3:
-            if user.delay == 0:
-                user.init_state()
-                resp.msg('Откуда начнём?')
-            else:
-                geo = user.geo_entity()
-                if geo:
-                    res = GeoApi(geo[0])
-                    logging.info('USER GEO ' + dump_json(res.data))
-                    if not res:
-                        resp.msg('Простите, я такого места не знаю, попробуйте ещё раз')
+                if text.sentence_collision(['где', 'найти']):
+                    api_res = None
+                    geo = user.geo_entity()
+                    try:
+                        if geo:
+                            api_res = GeoApi(geo[0])
+                        else:
+                            api_res = SearchApi(str(text.filter(['где', 'найти', 'близкий', 'радиус'])))
+                    except Exception:
+                        pass
+                    if api_res:
+                        user['context'] = 'search'
+                        resp.msg('Мне удалось найти несколько вариантов.')
+                        mp = MapsApi()
+                        for n, i in enumerate(api_res):
+                            resp.msg('{} - {}'.format(n, i.formatted_address))
+                            mp.include_view(i.rect)
+
+                        btn = Button(user, None, 'Показать карту', url=mp.get_url(static=False))
+                        try:
+                            mid = DialogsApi.upload_image_url(mp.get_url(static=True))
+                            if mid:
+                                user.set_image('temp', mid)
+                            else:
+                                raise Exception
+                            card = Card(user, user.text, mid)
+                            card['button'] = btn.send()
+                            user.add_card(card)
+                        except Exception:
+                            user.add_button(btn)
                     else:
-                        resp.msg('Вы это место имели ввиду?')
-                        resp.msg("{}".format(res[0].formatted_address))
-                        user['source'] = res[0].pos
-                        ma = MapsApi(bbox=res[0].rect)
-                        ma.add_marker(res[0].pos)
-                        user.add_button(Button(user,
-                                               'show_place_agreement',
-                                               'Показать карту',
-                                               url=ma.get_url(static=False)))
-                        user.state = -3
+                        resp.msg('Простите, не могу понять, о чём вы говорите.')
                 else:
-                    resp.msg('Я немного не понимаю, что это за место такое')
+                    resp.msg('Простите, не понимаю вашу просьбу')
+
             user.delay_up()
-
-        if user.state == -3:
-            if user.delay == 0:
-                user.init_state()
-            else:
-                a, d = sentence_agreement(user.text)
-                if a > d:
-                    user.state = 4
-                    resp.msg('Хорошо')
-                elif d > a:
-                    user.state = 3
-                    user.init_state()
-                    resp.msg('Нет? Ну как скажете.')
-                    del user['source']
-                    resp.msg('Откуда начнём?')
-                else:
-                    resp.msg('Я вас немного не поняла')
-            user.delay_up()
-
-        if user.state == 4:
-            if user.delay == 0:
-                user.init_state()
-                resp.msg('Выбирайте, куда будем идти.')
-            else:
-                geo = user.geo_entity()
-                if geo:
-                    res = GeoApi(geo[0])
-                    logging.info('USER GEO ' + dump_json(res.data))
-                    if not res:
-                        resp.msg('Простите, я такого места не знаю, попробуйте ещё раз')
-                    else:
-                        resp.msg('Вы это место иммели ввиду?')
-                        resp.msg("{}".format(res[0].formatted_address))
-                        r = res[0].rect
-                        c = r.center
-                        if r.w < .1:
-                            r.w = .1
-                        if r.h < .1:
-                            r.h = .1
-                        r.center = c
-                        user['target'] = r
-                        ma = MapsApi(bbox=res[0].rect)
-                        ma.add_marker(res[0].pos)
-                        user.add_button(Button(user,
-                                               'show_place_agreement',
-                                               'Показать карту',
-                                               url=ma.get_url(static=False)))
-                        user.state = -4
-            user.delay_up()
-
-        if user.state == -4:
-            if user.delay == 0:
-                user.init_state()
-            else:
-                a, d = sentence_agreement(user.text)
-                if a > d:
-                    user.state = 5
-                    resp.msg('Хорошо')
-                elif d > a:
-                    user.state = 4
-                    resp.msg('Нет? Ну как скажете.')
-                    del user['target']
-                    user.init_state()
-                    resp.msg('Выбирайте, куда будем идти.')
-                else:
-                    resp.msg('Я вас немного не поняла')
-            user.delay_up()
-
-        if user.state == 5:
-            ma = MapsApi()
-            ma.include_view(user['source'])
-            ma.include_view(user['target'])
-            ma.add_marker(user['source'], 'pm2am')
-            ma.add_marker(user['target'], 'pm2bm')
-
-            mid = DialogsApi.upload_image_url(ma.get_url(static=True))
-            user.set_image('temp', mid)
-
-            card = Card(user, 'Итоговый путь', mid)
-            card['button'] = Button(
-                user, None, 'Показать карту', attach=True,
-                url=ma.get_url(static=False), life=-1
-            ).send()
-            user.add_card(card)
-            resp.msg('Маршрут построен')
 
     elif user.type == 'ButtonPressed':
         resp.text = 'Выполняю'

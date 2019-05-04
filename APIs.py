@@ -2,12 +2,17 @@ import requests
 import json
 from io import BytesIO
 
-from parsing import Parse, Str
+from url_parsing import Parse, Str
 from geometry import GeoRect
+
+from settings import request_error
 
 
 SEARCH_API_KEY = 'dda3ddba-c9ea-4ead-9010-f43fbc15c6e3'
 SEARCH_API_URL = 'https://search-maps.yandex.ru/v1/?apikey={}&lang=ru_RU'.format(SEARCH_API_KEY)
+
+RASP_API_KEY = '9456c68c-75f5-466c-aa34-b660e8ac146b'
+RASP_API_URL = 'https://api.rasp.yandex.net/v3.0/{}/?apikey=%s' % (RASP_API_KEY,)
 
 GEOCODE_API_URL = "http://geocode-maps.yandex.ru/1.x/?format=json"
 STATIC_MAPS_API_URL = "http://static-maps.yandex.ru/1.x/?"
@@ -17,7 +22,7 @@ MAPS_URL = "http://yandex.ru/maps?"
 class Toponym:
 
     def __init__(self, geo_obj_dict):
-        if 'type' in geo_obj_dict and geo_obj_dict['type'] == 'FeatureCollection':
+        if 'type' in geo_obj_dict and geo_obj_dict['type'] == 'Feature':
             self.feature = True
             self.data = dict(geo_obj_dict)
             self.biz = 'properties' in self.data and 'CompanyMetaData' in self.data['properties']
@@ -38,7 +43,7 @@ class Toponym:
             u = Parse.pos(env['upperCorner'])
             return GeoRect(d[0], u[1], u[0] - d[0], u[1] - d[1])
         else:
-            if not self.biz:
+            if 'boundedBy' in self.data['properties']:
                 return GeoRect.bounding(self.data['properties']['boundedBy'])
             else:
                 return GeoRect(*self.data['geometry']['coordinates'], 0, 0)
@@ -64,6 +69,11 @@ class Toponym:
     def formatted_address(self):
         if not self.feature:
             return self['metaDataProperty']['GeocoderMetaData']['Address']['formatted']
+        else:
+            if not self.biz:
+                pass
+            else:
+                return self.data['properties']['CompanyMetaData']['address']
 
     def __getitem__(self, key):
         return self.data[key]
@@ -119,7 +129,13 @@ class MapsApi:
             if rect is not None:
                 pars['ll'] = rect.center
                 pars['spn'] = rect.size
-            return MAPS_URL + Str.string_query(pars)
+            res = {}
+            for k in ['ll', 'spn', 'z']:
+                if k in pars:
+                    res[k] = pars[k]
+            for p in pars.get('pt', []):
+                res['pt'] = res.get('pt', []) + [p[:1]]
+            return MAPS_URL + Str.string_query(res)
         else:
             return STATIC_MAPS_API_URL + Str.string_query(pars)
 
@@ -128,7 +144,7 @@ class MapsApi:
         try:
             resp.raise_for_status()
         except Exception:
-            print(resp.content)
+            request_error(resp)
             raise
         mf = BytesIO(resp.content)
         if surface:
@@ -314,7 +330,7 @@ class GeoApi:
         try:
             resp.raise_for_status()
         except Exception:
-            print(resp.content)
+            request_error(resp)
             raise
         res = resp.json()
         self.data = res['response']['GeoObjectCollection']
@@ -345,7 +361,8 @@ class GeoApi:
 
 
 class SearchApi:
-    def __init__(self, **kwargs):
+    def __init__(self, text, **kwargs):
+        kwargs['text'] = text
         for k, v in kwargs.items():
             if isinstance(v, str) or hasattr(v, '__int__'):
                 pass
@@ -354,11 +371,10 @@ class SearchApi:
             else:
                 kwargs[k] = Str.pos(v)
         resp = requests.get(SEARCH_API_URL, params=kwargs)
-        print(kwargs)
         try:
             resp.raise_for_status()
         except Exception:
-            print(resp.content)
+            request_error(resp)
             raise
         res = resp.json()
         if res.get('status', None) == 'error':
@@ -386,3 +402,32 @@ class SearchApi:
 
     def __str__(self):
         return json.dumps(self.data, indent=2, ensure_ascii=False)
+
+
+class RaspApi:
+
+    @staticmethod
+    def nearest_stations(pos, dist=1):
+        resp = requests.get(RASP_API_URL.format('nearest_stations'),
+                            params=Str.string_query({
+                                'lat': pos[0],
+                                'lng': pos[1],
+                                'distance': dist
+                            }))
+        try:
+            resp.raise_for_status()
+        except Exception:
+            request_error(resp)
+            raise
+        return resp.json()
+
+    @staticmethod
+    def route(src, trg):
+        resp = requests.get(RASP_API_URL.format('search'),
+                            params={'from': str(src), 'to': str(trg)})
+        try:
+            resp.raise_for_status()
+        except Exception:
+            request_error(resp)
+            raise
+        return resp.json()

@@ -1,11 +1,6 @@
 import logging
 import json
 
-
-def dump_json(dct):
-    return json.dumps(dct, ensure_ascii=False)
-
-
 FORMATTER = logging.Formatter('%(asctime)s %(name)s:%(levelname)s - %(message)s')
 
 logging.basicConfig()
@@ -24,5 +19,14 @@ logger.addHandler(file_handler)
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(FORMATTER)
 logger.addHandler(stream_handler)
+
+
+def dump_json(dct):
+    return json.dumps(dct, ensure_ascii=False)
+
+
+def request_error(response):
+    logging.error('RESPONSE STATUS ' + str(response.status_code) + ' GOT ' + str(response.content.decode('utf-8')))
+
 
 logging.info('LOGGING SET UP')

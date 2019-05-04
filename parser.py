@@ -4,7 +4,7 @@ import re
 mra = pmp.MorphAnalyzer()
 
 
-class WordVars:
+class Word:
 
     def __init__(self, word, *tags, score_thr=0, single=False, **ntags):
         if isinstance(word, self.__class__):
@@ -42,67 +42,136 @@ class WordVars:
     def __str__(self):
         return str(self.data)
 
-    def collision(self, other):
+    def word_collision(self, other):
         score = 0
-        other = WordVars(other)
+        other = self.__class__(other)
         for i in self.data:
             for j in other.data:
-                if i.normal_form == j.normal_form and i.tag.POS == j.tag.POS:
+                if i.normal_form == j.normal_form:
                     score += (i.score * j.score) * (1 - score)
         return score
 
     def sentence_collision(self, sentence):
-        if isinstance(sentence, str):
-            sentence = re.sub(r'[^\w\s]+', ' ', sentence).split()
+        sentence = Sentence(sentence)
         score = 0
-        collision = self.collision
+        collision = self.word_collision
         for i in sentence:
-            c = collision(WordVars(i))
+            c = collision(self.__class__(i))
             score += c * (1 - score)
         return score
-
+    
+    @property
     def agreement(self):
         ac = ['да', 'можно', 'разрешю', 'соглашаюсь', 'возможно', 'конечно', 'вероятно', 'даю', 'хочу',
-              'хорошо', 'надо', 'очень', 'сильно', 'ладно', 'желаю', 'ок', 'окей', 'согласие']
+              'хорошо', 'надо', 'очень', 'сильно', 'ладно', 'желаю', 'ок', 'окей', 'согласие', 'положительный']
         return self.sentence_collision(ac)
-
+    
+    @property
     def disagreement(self):
-        ac = ['нет', 'не', 'ни', 'плохо', 'исключаю', 'стоп', 'отменяю']
+        ac = ['нет', 'не', 'ни', 'плохо', 'исключаю', 'стоп', 'отменяю', 'несогласие', 'отрицательный']
         return self.sentence_collision(ac)
 
 
-def sentence_agreement(sentence):
-    if isinstance(sentence, str):
-        sentence = re.sub(r'[^\w\s]+', ' ', sentence).split()
-    score = 0
-    dscore = 0
-    na = 0
-    nd = 1
-    for i in sentence:
-        wv = WordVars(i)
-        a = wv.agreement()
-        da = wv.disagreement()
-        if a:
-            score += a * (1 - score)
-            na += 1
-        if da:
-            dscore += da * (1 - dscore)
-            nd += 1
-    return score * na / (na + nd), dscore * nd / (na + nd)
+class Sentence:
+    
+    def __init__(self, data):
+        if isinstance(data, str):
+            self.data = [Word(e) for e in re.sub(r'[^\w\s]+', ' ', data).split() if e]
+        else:
+            self.data = [Word(e) for e in data if e]
+    
+    def __bool__(self):
+        return bool(self.data)
+    
+    def __getitem__(self, ind):
+        return self.data[ind]
+    
+    def __iter__(self):
+        return iter(self.data)
+    
+    def __len__(self):
+        return len(self.data)
+    
+    def __str__(self):
+        return ' '.join(e[0].normal_form for e in self.data if e)
+
+    def word_collision(self, other):
+        return Word(other).sentence_collision(self)
+    
+    def sentence_collision(self, sentence):
+        sentence = self.__class__(sentence)
+        score = 0
+        for wa in self:
+            for wb in sentence:
+                score += wa.word_collision(wb) * (1 - score)
+        return score
+
+    def filter(self, words):
+        return Sentence(e for e in self.data if not e.sentence_collision(words))
+    
+    @property
+    def agreement(self):
+        score = 0
+        dscore = 0
+        na = 0
+        nd = 1
+        for w in self:
+            a = w.agreement()
+            da = w.disagreement()
+            if a:
+                score += a * (1 - score)
+                na += 1
+            if da:
+                dscore += da * (1 - dscore)
+                nd += 1
+        return score * na / (na + nd), dscore * nd / (na + nd)
+
+
+# def sentence_collision(a, b):
+#     if isinstance(a, str):
+#         a = re.sub(r'[^\w\s]+', ' ', a).split()
+#     if isinstance(b, str):
+#         b = re.sub(r'[^\w\s]+', ' ', b).split()
+#     score = 0
+#     for wa in a:
+#         wa = Word(wa)
+#         for wb in b:
+#             score += wa.word_collision(wb) * (1 - score)
+#     return score
+#
+#
+# def sentence_agreement(sentence):
+#     if isinstance(sentence, str):
+#         sentence = re.sub(r'[^\w\s]+', ' ', sentence).split()
+#     score = 0
+#     dscore = 0
+#     na = 0
+#     nd = 1
+#     for i in sentence:
+#         wv = Word(i)
+#         a = wv.agreement()
+#         da = wv.disagreement()
+#         if a:
+#             score += a * (1 - score)
+#             na += 1
+#         if da:
+#             dscore += da * (1 - dscore)
+#             nd += 1
+#     return score * na / (na + nd), dscore * nd / (na + nd)
 
 
 if __name__ == '__main__':
-    print(WordVars('стали').collision(WordVars('сталь')))
-    print(WordVars('ласка').collision(WordVars('ласка')))
-    print(WordVars('замок').collision(WordVars('замок')))
-    print(WordVars('мой').collision(WordVars('мой')))
-    print(WordVars('да').collision('да'))
+    print(Word('стали').word_collision(Word('сталь')))
+    print(Word('ласка').word_collision(Word('ласка')))
+    print(Word('замок').word_collision(Word('замок')))
+    print(Word('мой').word_collision(Word('мой')))
+    print(Word('да').word_collision('да'))
     print()
-    print(WordVars('да').sentence_collision(
+    print(Word('да').sentence_collision(
         'в этом слове есть согласие, да ведь? не очень сильно, но да, есть и несогласие'))
-    print(WordVars('нет').sentence_collision(
+    print(Word('нет').sentence_collision(
         'в этом слове есть согласие, да ведь? не очень сильно, но да, есть и несогласие'))
-    print(WordVars('да').agreement())
-    print(WordVars('нет').disagreement())
+    print(Word('да').agreement())
+    print(Word('нет').disagreement())
     print()
-    print(sentence_agreement('в этом слове есть согласие, да ведь? не очень сильно, но да, есть и несогласие'))
+    print(Sentence('в этом слове есть согласие, да ведь? не очень сильно, но да, есть и несогласие').agreement)

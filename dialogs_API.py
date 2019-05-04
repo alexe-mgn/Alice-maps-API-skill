@@ -1,5 +1,5 @@
 import requests
-from settings import logging, dump_json
+from settings import logging, dump_json, request_error
 
 SKILL_ID = '18bd15c0-0056-4265-8e24-f8245b56530c'
 OAuth = 'AQAAAAAOlI_mAAT7o4LNuuJYEUh7rJFD90giiuw'
@@ -19,11 +19,12 @@ class DialogsApi:
 
     @staticmethod
     def get_images():
-        return [e['id'] for e in
+        resp = [e['id'] for e in
                 requests.get(DIALOGS_API_SKILL_URL,
                              headers={
                                  'Authorization': 'OAuth {}'.format(OAuth)
                              }).json()['images']]
+        return resp
 
     @staticmethod
     def remove_image(mid):
@@ -31,6 +32,10 @@ class DialogsApi:
                                headers={
                                    'Authorization': 'OAuth {}'.format(OAuth)
                                }).json()
+        try:
+            resp.raise_for_status()
+        except Exception:
+            request_error(resp)
         return 'result' in resp and resp['result'] == 'ok'
 
     @classmethod
@@ -49,6 +54,10 @@ class DialogsApi:
                                  'Authorization': 'OAuth {}'.format(OAuth),
                              }).json()
         logging.info('GOT ' + dump_json(resp))
+        try:
+            resp.raise_for_status()
+        except Exception:
+            request_error(resp)
         if 'image' in resp:
             return resp['image']['id']
         return False
@@ -61,6 +70,10 @@ class DialogsApi:
                                  'Authorization': 'OAuth {}'.format(OAuth),
                              }).json()
         logging.info('GOT ' + dump_json(resp))
+        try:
+            resp.raise_for_status()
+        except Exception:
+            request_error(resp)
         if 'image' in resp:
             return resp['image']['id']
         return False

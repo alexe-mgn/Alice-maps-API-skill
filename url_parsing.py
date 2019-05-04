@@ -37,12 +37,18 @@ class Str:
         return ','.join(q + [Str.points(points, rev)])
 
     @staticmethod
+    def parameter(k, v):
+        pass
+
+    @staticmethod
     def query(dct):
         res = dct.copy()
         for k, v in dct.items():
             if k == 'pt':
                 res[k] = '~'.join(
-                    [(Str.pos(m[0]) + ((',' + m[1]) if len(m) > 1 and m[1] else '')) for m in v]
+                    [(
+                            Str.pos(m[0]) + ((',' + m[1]) if len(m) > 1 and m[1] else '')
+                    ) for m in v]
                 )
             elif k == 'pl':
                 polys = []
@@ -66,12 +72,14 @@ class Str:
                     )
                     polys.append(str_poly)
                 res[k] = '~'.join(polys)
-            elif isinstance(v, str):
+            elif isinstance(v, str) or hasattr(v, '__int__'):
                 res[k] = str(v)
             elif hasattr(v, 'str_parameter'):
                 res[k] = v.str_parameter()
-            elif hasattr(v, '__getitem__'):
+            elif len(v) == 2 and hasattr(v[0], '__int__'):
                 res[k] = Str.pos(v)
+            elif hasattr(v, '__getitem__'):
+                pass
             else:
                 res[k] = str(v)
         return res
