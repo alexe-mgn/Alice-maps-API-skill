@@ -27,6 +27,7 @@ def request_handler():
 
 
 def dialog(data):
+    logging.info('-----------DIALOG-----------')
     if data['session']['new']:
         Storage.remove(data['session']['user_id'])
     user = Storage(data)
@@ -35,6 +36,7 @@ def dialog(data):
     logging.info('INPUT ' + dump_json(user.request))
     logging.info('STATE ' + str(user.state) + ' ' + str(user.state_init) + ' DELAY ' + str(user.delay))
     logging.info('TYPE ' + str(user.type))
+    logging.info('STORAGE ' + dump_json(user.data))
 
     user.pre_step()
 
@@ -58,7 +60,7 @@ def dialog(data):
         if user.state == 1:
             if user.delay == 0:
                 user.init_state()
-                resp.msg('Что вы хотите узнать, %s? Я могу:\n'
+                resp.msg('Что вы хотите узнать, %s? Я могу:\n\n'
                          '- Найти определённое место по названию\n'
                          '"найди|где ... [В радиусе ... (в км)]"\n'
                          % (user['name'],))
@@ -76,25 +78,27 @@ def dialog(data):
                     except Exception:
                         pass
                     if api_res:
+                        logging.info('RECOGNIZED {} GEO '.format(len(api_res)) + dump_json(api_res.data))
                         user['context'] = 'search'
                         resp.msg('Мне удалось найти несколько вариантов.')
                         mp = MapsApi()
-                        for n, i in enumerate(api_res):
+                        for n, i in enumerate(api_res, 1):
                             resp.msg('{} - {}'.format(n, i.formatted_address))
                             mp.include_view(i.rect)
+                            mp.add_marker(i.pos, 'pm2rdm' + str(n))
 
                         btn = Button(user, None, 'Показать карту', url=mp.get_url(static=False))
-                        # try:
-                        #     mid = DialogsApi.upload_image_url(mp.get_url(static=True))
-                        #     if mid:
-                        #         user.set_image('temp', mid)
-                        #     else:
-                        #         raise Exception
-                        #     card = Card(user, user.text, mid)
-                        #     card['button'] = btn.send()
-                        #     user.add_card(card)
-                        # except Exception:
-                        user.add_button(btn)
+                        try:
+                            mid = DialogsApi.upload_image_url(mp.get_url(static=True))
+                            if mid:
+                                user.set_image('temp', mid)
+                            else:
+                                raise Exception
+                            card = Card(user, user.text, mid)
+                            card['button'] = btn.send()
+                            user.add_card(card)
+                        except Exception:
+                            user.add_button(btn)
                     else:
                         resp.msg('Простите, не могу понять, о чём вы говорите.')
                 else:

@@ -214,6 +214,7 @@ class Storage(DictHandler):
         self.buttons.append(button)
 
     def add_card(self, card):
+        logging.info('Adding card ' + dump_json(card.data))
         self.cards.append(card)
 
     def remove_button(self, bid):
