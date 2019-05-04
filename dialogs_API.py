@@ -28,6 +28,7 @@ class DialogsApi:
 
     @staticmethod
     def remove_image(mid):
+        logging.info('REMOVING IMAGE ' + str(mid))
         resp = requests.delete(DIALOGS_API_SKILL_URL + str(mid).strip('/'),
                                headers={
                                    'Authorization': 'OAuth {}'.format(OAuth)
@@ -40,6 +41,7 @@ class DialogsApi:
 
     @classmethod
     def remove_all_images(cls):
+        logging.info('REMOVING IMAGES')
         r = True
         for i in cls.get_images():
             if not cls.remove_image(i):

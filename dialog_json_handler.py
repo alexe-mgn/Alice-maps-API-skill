@@ -224,7 +224,7 @@ class Storage(DictHandler):
 
     def set_image(self, key, mid):
         if mid:
-            if mid in self.images.values():
+            if key in self.images:
                 DialogsApi.remove_image(self.images[key])
             self.images[key] = mid
 
