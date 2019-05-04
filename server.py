@@ -97,12 +97,13 @@ def dialog(data):
                             mid = DialogsApi.upload_image_url(mp.get_url(static=True))
                             if mid:
                                 user.set_image('temp', mid)
+                                card = Card(user, resp.text, mid)
+                                card['button'] = btn.send()
+                                user.add_card(card)
                             else:
-                                raise Exception
-                            card = Card(user, resp.text, mid)
-                            card['button'] = btn.send()
-                            user.add_card(card)
+                                logging.info('UPLOAD FAILED')
                             logging.info('ASYNC FINISHED')
+
                         threading.Thread(target=_upload).start()
 
                         user.add_button(btn)
