@@ -32,6 +32,7 @@ def request_handler():
 def upload(storage, key, url):
     logging.info('ASYNC UPLOAD ' + key + ' ' + url)
     try:
+        logging.info('STORAGE ' + str(id(storage)))
         mid = DialogsApi.upload_image_url(url)
         logging.info('RETURNED ' + str(mid))
         if mid:
@@ -53,7 +54,7 @@ def dialog(data):
     logging.info('INPUT ' + dump_json(user.request))
     logging.info('STATE ' + str(user.state) + ' ' + str(user.state_init) + ' DELAY ' + str(user.delay))
     logging.info('TYPE ' + str(user.type))
-    logging.info('STORAGE ' + dump_json(user.data))
+    logging.info('STORAGE ' + str(id(user)) + ' ' + dump_json(user.data))
 
     user.pre_step()
 
