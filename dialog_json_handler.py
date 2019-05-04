@@ -224,10 +224,12 @@ class Storage(DictHandler):
                 self.buttons.remove(i)
 
     def set_image(self, key, mid):
+        logging.info('SETTING IMAGE ' + str(key) + ' TO ' + str(mid))
         if mid:
             if key in self.images:
-                mlpc.Process(target=lambda: DialogsApi.remove_image(self.images[key])).start()
+                mlpc.Process(target=DialogsApi.remove_image, args=(self.images[key],)).start()
             self.images[key] = mid
+            logging.info('NEW IMAGES ' + dump_json(self.images))
 
     def get_image(self, key):
         logging.info('FROM IMAGES ' + dump_json(self.images))
