@@ -1,5 +1,5 @@
 import requests
-from settings import logging, request_error
+from settings import logging, log_request
 
 SKILL_ID = '18bd15c0-0056-4265-8e24-f8245b56530c'
 OAuth = 'AQAAAAAOlI_mAAT7o4LNuuJYEUh7rJFD90giiuw'
@@ -33,10 +33,7 @@ class DialogsApi:
                                headers={
                                    'Authorization': 'OAuth {}'.format(OAuth)
                                })
-        try:
-            resp.raise_for_status()
-        except Exception:
-            request_error(resp)
+        log_request(resp)
         resp = resp.json()
         return 'result' in resp and resp['result'] == 'ok'
 
@@ -56,10 +53,7 @@ class DialogsApi:
                              headers={
                                  'Authorization': 'OAuth {}'.format(OAuth),
                              })
-        try:
-            resp.raise_for_status()
-        except Exception:
-            request_error(resp)
+        log_request(resp)
         resp = resp.json()
         if 'image' in resp:
             return resp['image']['id']
@@ -72,10 +66,7 @@ class DialogsApi:
                              headers={
                                  'Authorization': 'OAuth {}'.format(OAuth),
                              })
-        try:
-            resp.raise_for_status()
-        except Exception:
-            request_error(resp)
+        log_request(resp)
         resp = resp.json()
         if 'image' in resp:
             return resp['image']['id']

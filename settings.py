@@ -25,8 +25,8 @@ def dump_json(dct):
     return json.dumps(dct, ensure_ascii=False)
 
 
-def request_error(response):
-    logging.error('RESPONSE STATUS ' + str(response.status_code) + ' GOT ' + str(response.content.decode('utf-8')))
+def log_request(response):
+    logging.info('RESPONSE STATUS ' + str(response.status_code) + ' GOT ' + str(response.content.decode('utf-8')))
 
 
 logging.info('LOGGING SET UP')

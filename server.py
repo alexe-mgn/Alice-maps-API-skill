@@ -33,13 +33,14 @@ def upload(storage, key, url):
     logging.info('ASYNC UPLOAD ' + key + ' ' + url)
     try:
         mid = DialogsApi.upload_image_url(url)
+        logging.info('RETURNED ' + str(mid))
         if mid:
             storage.set_image(key, mid)
         else:
             logging.info('UPLOAD FAILED')
         logging.info('ASYNC FINISHED ' + str(mid))
     except Exception:
-        logging.info('UPLOAD FAILES')
+        logging.info('UPLOAD FAILED')
 
 
 def dialog(data):
