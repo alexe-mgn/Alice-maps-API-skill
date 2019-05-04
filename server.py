@@ -103,7 +103,7 @@ def dialog(data):
                             card['button'] = btn.send()
                             user.add_card(card)
                             logging.info('ASYNC FINISHED')
-                        threading.Thread(target=_upload)
+                        threading.Thread(target=_upload).start()
 
                         user.add_button(btn)
                     else:

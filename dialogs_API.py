@@ -1,5 +1,5 @@
 import requests
-from settings import logging, dump_json, request_error
+from settings import logging, request_error
 
 SKILL_ID = '18bd15c0-0056-4265-8e24-f8245b56530c'
 OAuth = 'AQAAAAAOlI_mAAT7o4LNuuJYEUh7rJFD90giiuw'
