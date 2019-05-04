@@ -1,7 +1,7 @@
 from flask import Flask, request
 from settings import logging, dump_json
 from dialog_json_handler import Storage, Response, Button, Card
-from parser import WordVars, Sentence
+from parser import Word, Sentence
 from APIs import GeoApi, MapsApi, SearchApi
 from dialogs_API import DialogsApi
 
