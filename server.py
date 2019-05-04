@@ -1,6 +1,9 @@
+import threading
 from flask import Flask, request
+
 from settings import logging, dump_json
 from dialog_json_handler import Storage, Response, Button, Card
+
 from parser import Word, Sentence
 from APIs import GeoApi, MapsApi, SearchApi
 from dialogs_API import DialogsApi
@@ -88,7 +91,9 @@ def dialog(data):
                             mp.add_marker(i.pos, 'pm2rdm' + str(n))
 
                         btn = Button(user, None, 'Показать карту', url=mp.get_url(static=False))
-                        try:
+
+                        def _upload():
+                            logging.info('ASYNC UPLOAD')
                             mid = DialogsApi.upload_image_url(mp.get_url(static=True))
                             if mid:
                                 user.set_image('temp', mid)
@@ -97,8 +102,10 @@ def dialog(data):
                             card = Card(user, resp.text, mid)
                             card['button'] = btn.send()
                             user.add_card(card)
-                        except Exception:
-                            user.add_button(btn)
+                            logging.info('ASYNC FINISHED')
+                        threading.Thread(target=_upload)
+
+                        user.add_button(btn)
                     else:
                         resp.msg('Простите, не могу понять, о чём вы говорите.')
                 else:
