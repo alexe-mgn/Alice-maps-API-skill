@@ -14,9 +14,9 @@ SEARCH_API_URL = 'https://search-maps.yandex.ru/v1/?apikey={}&lang=ru_RU'.format
 RASP_API_KEY = '9456c68c-75f5-466c-aa34-b660e8ac146b'
 RASP_API_URL = 'https://api.rasp.yandex.net/v3.0/{}/?apikey=%s' % (RASP_API_KEY,)
 
-GEOCODE_API_URL = "http://geocode-maps.yandex.ru/1.x/?format=json"
-STATIC_MAPS_API_URL = "http://static-maps.yandex.ru/1.x/?"
-MAPS_URL = "http://yandex.ru/maps?"
+GEOCODE_API_URL = "https://geocode-maps.yandex.ru/1.x/?format=json"
+STATIC_MAPS_API_URL = "https://static-maps.yandex.ru/1.x/?"
+MAPS_URL = "https://yandex.ru/maps?"
 
 
 class Toponym:

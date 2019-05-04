@@ -94,7 +94,7 @@ def dialog(data):
                                 user.set_image('temp', mid)
                             else:
                                 raise Exception
-                            card = Card(user, user.text, mid)
+                            card = Card(user, resp.text, mid)
                             card['button'] = btn.send()
                             user.add_card(card)
                         except Exception:
