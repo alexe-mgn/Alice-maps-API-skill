@@ -104,7 +104,8 @@ def dialog(data):
                             mp.include_view(i.rect)
                             mp.add_marker(i.pos, 'pm2rdm' + str(n))
 
-                        t = threading.Thread(target=upload, args=(user, 'map', mp.get_url(True))).start()
+                        t = threading.Thread(target=upload, args=(user, 'map', mp.get_url(True)))
+                        t.start()
                         t.join()
                         btn = Button(user, None, 'Показать карту', payload={'action': 'map', 'url': mp.get_url(False)})
                         user.add_button(btn)
