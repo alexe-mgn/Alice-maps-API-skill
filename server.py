@@ -84,17 +84,17 @@ def dialog(data):
                             mp.include_view(i.rect)
 
                         btn = Button(user, None, 'Показать карту', url=mp.get_url(static=False))
-                        try:
-                            mid = DialogsApi.upload_image_url(mp.get_url(static=True))
-                            if mid:
-                                user.set_image('temp', mid)
-                            else:
-                                raise Exception
-                            card = Card(user, user.text, mid)
-                            card['button'] = btn.send()
-                            user.add_card(card)
-                        except Exception:
-                            user.add_button(btn)
+                        # try:
+                        #     mid = DialogsApi.upload_image_url(mp.get_url(static=True))
+                        #     if mid:
+                        #         user.set_image('temp', mid)
+                        #     else:
+                        #         raise Exception
+                        #     card = Card(user, user.text, mid)
+                        #     card['button'] = btn.send()
+                        #     user.add_card(card)
+                        # except Exception:
+                        user.add_button(btn)
                     else:
                         resp.msg('Простите, не могу понять, о чём вы говорите.')
                 else:
