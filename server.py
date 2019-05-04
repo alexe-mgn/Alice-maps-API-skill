@@ -30,13 +30,16 @@ def request_handler():
 
 
 def upload(storage, key, url):
-    logging.info('ASYNC UPLOAD')
-    mid = DialogsApi.upload_image_url(url)
-    if mid:
-        storage.set_image(key, mid)
-    else:
-        logging.info('UPLOAD FAILED')
-    logging.info('ASYNC FINISHED')
+    logging.info('ASYNC UPLOAD ' + key + ' ' + url)
+    try:
+        mid = DialogsApi.upload_image_url(url)
+        if mid:
+            storage.set_image(key, mid)
+        else:
+            logging.info('UPLOAD FAILED')
+        logging.info('ASYNC FINISHED ' + str(mid))
+    except Exception:
+        logging.info('UPLOAD FAILES')
 
 
 def dialog(data):
