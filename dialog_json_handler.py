@@ -1,3 +1,4 @@
+import multiprocessing as mlpc
 from flask import jsonify
 from settings import logging, dump_json
 from dialogs_API import DialogsApi
@@ -225,13 +226,16 @@ class Storage(DictHandler):
     def set_image(self, key, mid):
         if mid:
             if key in self.images:
-                DialogsApi.remove_image(self.images[key])
+                mlpc.Process(target=lambda: DialogsApi.remove_image(self.images[key])).start()
             self.images[key] = mid
 
     def get_image(self, key):
+        logging.info('FROM IMAGES ' + dump_json(self.images))
         for k, v in self.images.items():
             if k == key:
+                logging.info('WITH KEY ' + str(key) + ' GOT ' + str(v))
                 return v
+        logging.info('WITH KEY ' + str(key) + ' GOT NONE')
         return None
 
     # REQUEST
