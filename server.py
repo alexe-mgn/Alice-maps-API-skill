@@ -4,7 +4,7 @@ from flask import Flask, request
 from settings import logging, dump_json
 from dialog_json_handler import Storage, Response, Button, Card
 
-from parser import Word, Sentence
+from input_parser import Sentence
 from APIs import GeoApi, MapsApi, SearchApi
 from dialogs_API import DialogsApi
 
@@ -27,21 +27,6 @@ def request_handler():
     resp = dialog(data)
 
     return resp.send()
-
-
-def upload(storage, key, url):
-    logging.info('ASYNC UPLOAD ' + key + ' ' + url)
-    try:
-        logging.info('STORAGE ' + str(id(storage)))
-        mid = DialogsApi.upload_image_url(url)
-        logging.info('RETURNED ' + str(mid))
-        if mid:
-            storage.set_image(key, mid)
-        else:
-            logging.info('UPLOAD FAILED')
-        logging.info('ASYNC FINISHED ' + str(mid))
-    except Exception:
-        logging.info('UPLOAD FAILED')
 
 
 def dialog(data):
@@ -105,8 +90,7 @@ def dialog(data):
                             mp.include_view(i.rect)
                             mp.add_marker(i.pos, 'pm2rdm' + str(n))
 
-                        t = mlpc.Process(target=upload, args=(user, 'map', mp.get_url(True)))
-                        t.start()
+                        mlpc.Process(target=user.upload_image, args=('map', mp.get_url(True))).start()
                         btn = Button(user, None, 'Показать карту', payload={'action': 'map', 'url': mp.get_url(False)})
                         user.add_button(btn)
                     else:

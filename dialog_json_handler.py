@@ -223,11 +223,19 @@ class Storage(DictHandler):
             if i.id == bid:
                 self.buttons.remove(i)
 
+    def upload_image(self, key, url):
+        try:
+            mid = DialogsApi.upload_image_url(url)
+            if mid:
+                self.set_image(key, mid)
+        except Exception:
+            pass
+
     def set_image(self, key, mid):
         logging.info('SETTING IMAGE ' + str(key) + ' TO ' + str(mid))
         if mid:
             if key in self.images:
-                mlpc.Process(target=DialogsApi.remove_image, args=(self.images[key],)).start()
+                DialogsApi.remove_image(self.images[key])
             self.images[key] = mid
             logging.info('NEW IMAGES ' + dump_json(self.images))
 
