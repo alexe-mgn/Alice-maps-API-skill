@@ -8,6 +8,8 @@ from input_parser import Sentence
 from APIs import GeoApi, MapsApi, SearchApi
 from dialogs_API import DialogsApi
 
+pool = mlpc.Pool()
+
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
@@ -90,7 +92,7 @@ def dialog(data):
                             mp.include_view(i.rect)
                             mp.add_marker(i.pos, 'pm2rdm' + str(n))
 
-                        mlpc.Process(target=user.upload_image, args=('map', mp.get_url(True))).start()
+                        pool.apply_async(user.upload_image, args=('map', mp.get_url(True)))
                         btn = Button(user, None, 'Показать карту', payload={'action': 'map', 'url': mp.get_url(False)})
                         user.add_button(btn)
                     else:
