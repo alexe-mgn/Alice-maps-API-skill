@@ -32,11 +32,12 @@ class DialogsApi:
         resp = requests.delete(DIALOGS_API_SKILL_URL + str(mid).strip('/'),
                                headers={
                                    'Authorization': 'OAuth {}'.format(OAuth)
-                               }).json()
+                               })
         try:
             resp.raise_for_status()
         except Exception:
             request_error(resp)
+        resp = resp.json()
         return 'result' in resp and resp['result'] == 'ok'
 
     @classmethod
@@ -54,12 +55,12 @@ class DialogsApi:
         resp = requests.post(DIALOGS_API_SKILL_URL, files={'file': source},
                              headers={
                                  'Authorization': 'OAuth {}'.format(OAuth),
-                             }).json()
-        logging.info('GOT ' + dump_json(resp))
+                             })
         try:
             resp.raise_for_status()
         except Exception:
             request_error(resp)
+        resp = resp.json()
         if 'image' in resp:
             return resp['image']['id']
         return False
@@ -70,12 +71,12 @@ class DialogsApi:
         resp = requests.post(DIALOGS_API_SKILL_URL, json={'url': url},
                              headers={
                                  'Authorization': 'OAuth {}'.format(OAuth),
-                             }).json()
-        logging.info('GOT ' + dump_json(resp))
+                             })
         try:
             resp.raise_for_status()
         except Exception:
             request_error(resp)
+        resp = resp.json()
         if 'image' in resp:
             return resp['image']['id']
         return False

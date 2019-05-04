@@ -96,10 +96,9 @@ def dialog(data):
                                 raise Exception
                             card = Card(user, user.text, mid)
                             card['button'] = btn.send()
-                            # user.add_card(card)
+                            user.add_card(card)
                         except Exception:
-                            pass
-                        user.add_button(btn)
+                            user.add_button(btn)
                     else:
                         resp.msg('Простите, не могу понять, о чём вы говорите.')
                 else:
