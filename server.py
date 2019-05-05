@@ -111,6 +111,7 @@ def dialog(data):
                 if img:
                     card = Card(user, '', img)
                     card['button'] = btn.send()
+                    card['title'] = btn['title']
                     user.add_card(card)
                 else:
                     user.add_button(btn)
