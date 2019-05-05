@@ -39,6 +39,7 @@ class Button(DictHandler):
         self.visible = True
         self.data = {
             'title': text,
+            'text': text,
             'payload': {} if not payload else payload,
             'hide': not attach
         }
