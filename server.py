@@ -128,7 +128,7 @@ def handle_state(user, resp):
                         ym = mp.get_url(False)
                         if user['position']:
                             mp.add_marker(user['position'], 'pm2al')
-                        btn = Button(user, None, 'Показать карту', payload={
+                        btn = Button(user, 'map', 'Показать карту', life=-1, payload={
                             'action': 'map',
                             'url': ym,
                             'image_url': mp.get_url(True)
@@ -155,6 +155,11 @@ def handle_state(user, resp):
                                  'Либо сразу задайте вопрос про такой-то вариант')
 
                 else:
+                    for i in user.buttons[::-1]:
+                        if sent.sentence_collision(i['text']):
+                            user.type = 'ButtonPressed'
+                            user.payload = i['payload']
+                            return handle_state(user, resp)
                     resp.msg('Простите, не понимаю вашу просьбу')
             user.delay_up()
 
@@ -172,7 +177,7 @@ def handle_state(user, resp):
 
                 mid = user.upload_image('map', mp.get_url(True))
                 resp.msg('Показать карту не удалось')
-                btn = Button(user, None, 'Показать на Яндекс.Картах', url=ym)
+                btn = Button(user, 'map_url', 'Показать на Яндекс.Картах', url=ym)
                 if mid:
                     card = Card(user, 'Показать на Яндекс.Картах', mid)
                     card['button'] = btn.send()
@@ -261,7 +266,7 @@ def handle_state(user, resp):
             action = pl.get('action')
             if action == 'map':
                 resp.text = 'Показать карту не удалось'
-                btn = Button(user, None, 'Показать на Яндекс.Картах', url=pl['url'])
+                btn = Button(user, 'map_url', 'Показать на Яндекс.Картах', url=pl['url'])
                 img = user.upload_image('map', pl['image_url'])
                 if img:
                     card = Card(user, '', img)

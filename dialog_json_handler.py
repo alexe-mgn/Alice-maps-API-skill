@@ -188,6 +188,10 @@ class Storage(DictHandler):
         # ButtonPressed, SimpleUtterance
         return self.request['request']['type']
 
+    @type.setter
+    def type(self, t):
+        self.request['request']['type'] = t
+
     @property
     def state(self):
         return self._state
@@ -231,6 +235,9 @@ class Storage(DictHandler):
                 return i
 
     def add_button(self, button):
+        old = self.get_button(button.id)
+        if old:
+            self.buttons.remove(old)
         self.buttons.append(button)
 
     def add_card(self, card):
@@ -285,6 +292,10 @@ class Storage(DictHandler):
     @property
     def payload(self):
         return self.request['request']['payload']
+
+    @payload.setter
+    def payload(self, dct):
+        self.request['request']['payload'] = dct
 
     @property
     def tokens(self):
