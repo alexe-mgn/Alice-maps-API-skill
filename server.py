@@ -112,7 +112,8 @@ def handle_state(user, resp):
 
                 elif sent.sentence_collision(['где', 'найти', 'искать']):
                     user['context'] = 'search'
-                    del user['vn']
+                    if 'vn' in user:
+                        del user['vn']
                     api_res = None
                     geo = user.geo_entity()
                     try:
