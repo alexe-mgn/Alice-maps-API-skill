@@ -23,6 +23,9 @@ class DictHandler:
     def __delitem__(self, key):
         del self.data[key]
 
+    def __contains__(self, key):
+        return key in self.data.keys()
+
     @property
     def dict(self):
         return self.data
