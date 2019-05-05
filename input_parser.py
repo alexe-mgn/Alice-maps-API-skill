@@ -123,8 +123,8 @@ class Sentence:
         na = 0
         nd = 1
         for w in self:
-            a = w.agreement()
-            da = w.disagreement()
+            a = w.agreement
+            da = w.disagreement
             if a:
                 score += a * (1 - score)
                 na += 1
@@ -156,8 +156,8 @@ class Sentence:
 #     nd = 1
 #     for i in sentence:
 #         wv = Word(i)
-#         a = wv.agreement()
-#         da = wv.disagreement()
+#         a = wv.agreement
+#         da = wv.disagreement
 #         if a:
 #             score += a * (1 - score)
 #             na += 1
@@ -178,7 +178,7 @@ if __name__ == '__main__':
         'в этом слове есть согласие, да ведь? не очень сильно, но да, есть и несогласие'))
     print(Word('нет').sentence_collision(
         'в этом слове есть согласие, да ведь? не очень сильно, но да, есть и несогласие'))
-    print(Word('да').agreement())
-    print(Word('нет').disagreement())
+    print(Word('да').agreement)
+    print(Word('нет').disagreement)
     print()
     print(Sentence('в этом слове есть согласие, да ведь? не очень сильно, но да, есть и несогласие').agreement)
