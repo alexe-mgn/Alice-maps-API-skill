@@ -164,12 +164,19 @@ def handle_state(user, resp):
             elif sent.sentence_collision(['время', 'когда', 'часы', 'сейчас', 'работает']):
                 wh = v.workhours
                 if wh:
-                    resp.msg(wh)
+                    resp.msg(wh['text'])
+                    resp.msg(wh['State']['text'])
+                    resp.msg('Сейчас {}'.format('открыто' if wh['State']['is_open_now'] == '1' else 'закрыто'))
                 else:
                     resp.msg('Данных о времени работы нет')
                 ac = True
             elif sent.sentence_collision(['телефон', 'сотовый', 'номер']):
                 t = v.phone
+                if t:
+                    resp.msg('Известные номера для этого объекта:')
+                    resp.msg('\n'.join(t))
+                else:
+                    resp.msg('Нет информации о номере телефона')
                 ac = True
             if ac:
                 user.state = user.back()

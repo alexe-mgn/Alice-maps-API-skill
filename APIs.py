@@ -93,10 +93,12 @@ class Toponym:
         return None
 
     @property
-    def phone(self):
+    def phones(self):
+        res = []
         if self.biz:
-            pass
-        return None
+            for p in self.data['properties']['CompanyMetaData'].get('Phones', []):
+                res.append(p['formatted'])
+        return res
 
 
 class MapsApi:
