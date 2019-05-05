@@ -58,7 +58,8 @@ def handle_state(user, resp):
     if user.type == 'SimpleUtterance':
         sent = Sentence(user.text)
         key_loc = sent.filter(
-            ['где', 'найти', 'близкий', 'радиус', 'от', 'до', 'наиболее', 'более', 'нахожусь', 'поблизости', 'рядом'])
+            ['где', 'найти', 'близкий', 'радиус', 'от', 'до', 'наиболее', 'более', 'нахожусь', 'поблизости', 'рядом',
+             'искать'])
         ag, dg = sent.agreement
 
         if user.state == 0:
@@ -101,7 +102,7 @@ def handle_state(user, resp):
                     user.state = -1
                     user.init_state(True)
 
-                elif sent.sentence_collision(['где', 'найти']):
+                elif sent.sentence_collision(['где', 'найти', 'искать']):
                     api_res = None
                     geo = user.geo_entity()
                     try:
@@ -135,7 +136,7 @@ def handle_state(user, resp):
                         })
                         user.add_button(btn)
                     else:
-                        resp.msg('Простите, не могу понять, о чём вы говорите. Попробуйте ещё раз')
+                        resp.msg('Простите, не могу понять, о каком месте вы говорите. Попробуйте ещё раз')
 
                 elif sent.sentence_collision(['умеешь', 'можешь']):
                     resp.msg(hint % (user['name'],))
@@ -207,6 +208,8 @@ def handle_state(user, resp):
                 resp.msg('Как скажете')
             else:
                 resp.msg('Что вы хотите узнать?')
+                for i in ['Время работы', 'телефон', 'адрес', 'покажи на карте']:
+                    user.add_button(Button(user, None, i))
                 return resp
             user.state = user.back()
             return handle_state(user, resp)
@@ -240,7 +243,8 @@ def handle_state(user, resp):
                     user['next'].append(callback)
                     user.state = -2
                 else:
-                    resp.msg('Простите, не понимаю о чём вы говорите')
+                    resp.msg('Где вы находитесь?')
+                    resp.msg('Простите, не могу понять где это')
             user.delay_up()
 
         if user.state == -2:
