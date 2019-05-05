@@ -173,6 +173,7 @@ class MapsApi:
             rect = GeoRect(*obj, 0, 0)
         else:
             return
+        rect.inflate_ip(.2, .2)
         if self.mode_init:
             self.rect = self.bounding().union(rect)
         else:
