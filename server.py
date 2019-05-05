@@ -75,7 +75,7 @@ def dialog(data):
                 if sent.sentence_collision(['близкий', 'поблизости']) and not user['position']:
                     user['next'].append(user.state)
                     user.state = -1
-                    resp.msg('{}?'.format(sent.filter(['близкий', 'поблизости'])[0][0].word))
+                    resp.msg('{}?'.format(sent.find(['близкий', 'поблизости'])[0][0].word))
                 elif sent.word_collision('нахожусь'):
                     user['next'].append(user.state)
                     user.state = -1

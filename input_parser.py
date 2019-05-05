@@ -115,6 +115,9 @@ class Sentence:
 
     def filter(self, words):
         return Sentence(e for e in self.data if not e.sentence_collision(words))
+
+    def find(self, words):
+        return Sentence(e for e in self.data if e.sentence_collision(words))
     
     @property
     def agreement(self):
