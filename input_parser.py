@@ -59,39 +59,40 @@ class Word:
             c = collision(self.__class__(i))
             score += c * (1 - score)
         return score
-    
+
     @property
     def agreement(self):
         ac = ['да', 'можно', 'разрешю', 'соглашаюсь', 'возможно', 'конечно', 'вероятно', 'даю', 'хочу',
               'хорошо', 'надо', 'очень', 'сильно', 'ладно', 'желаю', 'ок', 'окей', 'согласие', 'положительный']
         return self.sentence_collision(ac)
-    
+
     @property
     def disagreement(self):
-        ac = ['нет', 'не', 'ни', 'плохо', 'исключаю', 'стоп', 'отменяю', 'несогласие', 'отрицательный']
+        ac = ['нет', 'не', 'ни', 'плохо', 'исключаю', 'стоп', 'отменяю', 'несогласие', 'отрицательный', 'ничто',
+              'ничего']
         return self.sentence_collision(ac)
 
 
 class Sentence:
-    
+
     def __init__(self, data):
         if isinstance(data, str):
             self.data = [Word(e) for e in re.sub(r'[^\w\s]+', ' ', data).split() if e]
         else:
             self.data = [Word(e) for e in data if e]
-    
+
     def __bool__(self):
         return bool(self.data)
-    
+
     def __getitem__(self, ind):
         return self.data[ind]
-    
+
     def __iter__(self):
         return iter(self.data)
-    
+
     def __len__(self):
         return len(self.data)
-    
+
     def __str__(self):
         return ' '.join(e[0].normal_form for e in self.data if e)
 
@@ -104,7 +105,7 @@ class Sentence:
 
     def word_collision(self, other):
         return Word(other).sentence_collision(self)
-    
+
     def sentence_collision(self, sentence):
         sentence = self.__class__(sentence)
         score = 0
@@ -118,7 +119,7 @@ class Sentence:
 
     def find(self, words):
         return Sentence(e for e in self.data if e.sentence_collision(words))
-    
+
     @property
     def agreement(self):
         score = 0

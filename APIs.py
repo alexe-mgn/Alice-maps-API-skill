@@ -92,6 +92,12 @@ class Toponym:
                 return d['Hours']
         return None
 
+    @property
+    def phone(self):
+        if self.biz:
+            pass
+        return None
+
 
 class MapsApi:
     pars = {

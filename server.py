@@ -12,6 +12,9 @@ app.config['JSON_AS_ASCII'] = False
 hint = 'Что вы хотите узнать, %s? Я могу:\n\n' \
        '- Найти определённое место по названию\n' \
        '"найди|где ...]"\n' \
+       'Про любой из найденных результатов я могу рассказать подробнее\n' \
+       '"... подробнее | вариант | расскажи ... <номер>"\n' \
+       '\n' \
        'Дополнительно:\n' \
        '"Я нахожусь ..." - для улучшения поиска\n' \
        '"Что ты умеешь|можешь..."'
@@ -56,6 +59,7 @@ def handle_state(user, resp):
         key_loc = sent.filter(
             ['где', 'найти', 'близкий', 'радиус', 'от', 'до', 'наиболее', 'более', 'нахожусь', 'поблизости'])
         ag, dg = sent.agreement
+
         if user.state == 0:
             if user.delay == 0:
                 user.init_state()
@@ -75,7 +79,8 @@ def handle_state(user, resp):
         if user.state == 1:
             if user.delay == 0:
                 user.init_state()
-                resp.msg(hint % (user['name'],))
+                if not user.get('context', None):
+                    resp.msg(hint % (user['name'],))
             else:
                 if sent.sentence_collision(['близкий', 'поблизости']) and not user['position']:
                     def callback(user=user, request=user.request):
@@ -110,10 +115,14 @@ def handle_state(user, resp):
                     if api_res:
                         logging.info('RECOGNIZED {} GEO '.format(len(api_res)) + log_object(api_res.data))
                         user['context'] = 'search'
+                        user['variants'] = []
                         resp.msg('Вот что мне удалось найти:\n')
                         mp = MapsApi()
+                        if user['position']:
+                            mp.add_marker(user['position'], 'pm2al')
                         for n, i in enumerate(api_res, 1):
                             resp.msg('{} - {}'.format(n, i.formatted_address))
+                            user['variants'].append(i)
                             mp.include_view(i.rect)
                             mp.add_marker(i.pos, 'pm2rdm' + str(n))
 
@@ -129,8 +138,43 @@ def handle_state(user, resp):
                 elif sent.sentence_collision(['умеешь', 'можешь']):
                     resp.msg(hint % (user['name'],))
 
+                elif user.get('variants', None) and sent.sentence_collision(['вариант', 'подробный', 'расскажи']):
+                    if user.entity(t='number'):
+                        vn = int(user.entity(t='number')['value'])
+                        if 1 <= vn <= len(user['variants']):
+                            user['vn'] = vn
+                            user['back'].append(1)
+                            user.state = 2
+                        else:
+                            resp.msg('Я что-то не помню варианта под таким номером.')
+                    else:
+                        resp.msg('Я могу рассказать вам поподробнее про любой из вариантов')
+
                 else:
                     resp.msg('Простите, не понимаю вашу просьбу')
+            user.delay_up()
+
+        if user.state == 2:
+            user['context'] = 'variant'
+            ac = False
+            v = user['variants'][user['vn']]
+            if sent.sentence_collision(['адрес', 'находиться']):
+                resp.msg('Полный адрес:\n' + v.formatted_address)
+                ac = True
+            elif sent.sentence_collision(['время', 'когда', 'часы', 'сейчас', 'работает']):
+                wh = v.workhours
+                if wh:
+                    resp.msg(wh)
+                else:
+                    resp.msg('Данных о времени работы нет')
+                ac = True
+            elif sent.sentence_collision(['телефон', 'сотовый', 'номер']):
+                t = v.phone
+                ac = True
+            if ac:
+                user.state = user.back()
+                return handle_state(user, resp)
+            resp.msg('Что вы хотите узнать?')
             user.delay_up()
 
         if user.state == -1:

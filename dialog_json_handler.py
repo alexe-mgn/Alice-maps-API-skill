@@ -113,7 +113,8 @@ class Storage(DictHandler):
         self.data = {
             'position': None,
             'next': [],
-            'back': []
+            'back': [],
+            'context': None
         }
 
     def __init__(self, req):
