@@ -120,17 +120,17 @@ def handle_state(user, resp):
                         user['variants'] = []
                         resp.msg('Вот что мне удалось найти:\n')
                         mp = MapsApi()
-                        if user['position']:
-                            mp.add_marker(user['position'], 'pm2al')
                         for n, i in enumerate(api_res, 1):
                             resp.msg('{} - {}\n\t{}'.format(n, i.name, i.formatted_address))
                             user['variants'].append(i)
                             mp.include_view(i.rect)
                             mp.add_marker(i.pos, 'pm2rdm' + str(n))
-
+                        ym = mp.get_url(False)
+                        if user['position']:
+                            mp.add_marker(user['position'], 'pm2al')
                         btn = Button(user, None, 'Показать карту', payload={
                             'action': 'map',
-                            'url': mp.get_url(False),
+                            'url': ym,
                             'image_url': mp.get_url(True)
                         })
                         user.add_button(btn)
@@ -163,7 +163,22 @@ def handle_state(user, resp):
             v = user['variants'][user['vn']]
             user.delay_up()
             if sent.word_collision('карта'):
-                resp.msg('Работа в прогрессе')
+                mp = MapsApi(bbox=v.rect)
+                mp.add_marker(v.pos, 'pm2bll')
+                ym = mp.get_url(False)
+                if user['position']:
+                    mp.add_marker(user['position'], 'pm2al')
+                    mp.include_view(user['position'])
+
+                mid = user.upload_image('map', mp.get_url(True))
+                resp.msg('Показать карту не удалось')
+                btn = Button(user, None, 'Показать на Яндекс.Картах', url=ym)
+                if mid:
+                    card = Card(user, 'Показать на Яндекс.Картах', mid)
+                    card['button'] = btn.send()
+                    user.add_card(card)
+                else:
+                    user.add_button(btn)
             elif sent.sentence_collision(['имя', 'название', 'что', 'тип']):
                 resp.msg(v.name)
             elif sent.sentence_collision(['адрес', 'находиться']):
