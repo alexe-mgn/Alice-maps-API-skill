@@ -21,9 +21,7 @@ def error_404(*args):
 @app.route('/post', methods=['POST'])
 def request_handler():
     data = request.json
-
     resp = dialog(data)
-
     return resp.send()
 
 
@@ -40,6 +38,12 @@ def dialog(data):
     logging.info('STORAGE ' + str(id(user)) + ' ' + dump_json(user.data))
 
     user.pre_step()
+    result = handle_state(user, resp)
+    user.post_step()
+    return result
+
+
+def handle_state(user, resp):
 
     if user.type == 'SimpleUtterance':
         sent = Sentence(user.text)
@@ -151,6 +155,7 @@ def dialog(data):
                 elif dg > ag:
                     resp.msg('Как скажете')
                     user.state = user['back'].pop(-1)
+                    return handle_state(user, resp)
                 else:
                     resp.msg('Не могу понять вашего ответа')
             user.delay_up()
@@ -173,5 +178,4 @@ def dialog(data):
         else:
             resp.text = 'Выполняю'
 
-    user.post_step()
     return resp
