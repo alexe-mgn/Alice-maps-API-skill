@@ -1,5 +1,5 @@
 from flask import jsonify
-from settings import logging, dump_json
+from settings import logging, log_object
 from dialogs_API import DialogsApi
 
 
@@ -193,11 +193,12 @@ class Storage(DictHandler):
 
     @state.setter
     def state(self, st):
-        if self._state != st:
-            logging.info('STATE SWITCHED ' + str(st))
-            self._delay = 0
-            self._state = st
-        self._state_init = False
+        if st is not None:
+            if self._state != st:
+                logging.info('STATE SWITCHED ' + str(st))
+                self._delay = 0
+                self._state = st
+            self._state_init = False
 
     @property
     def state_init(self):
@@ -232,7 +233,7 @@ class Storage(DictHandler):
         self.buttons.append(button)
 
     def add_card(self, card):
-        logging.info('Adding card ' + dump_json(card.data))
+        logging.info('Adding card ' + log_object(card.data))
         self.cards.append(card)
 
     def remove_button(self, bid):
@@ -255,10 +256,10 @@ class Storage(DictHandler):
             if key in self.images:
                 DialogsApi.remove_image(self.images[key])
             self.images[key] = mid
-            logging.info('NEW IMAGES ' + dump_json(self.images))
+            logging.info('NEW IMAGES ' + log_object(self.images))
 
     def get_image(self, key):
-        logging.info('FROM IMAGES ' + dump_json(self.images))
+        logging.info('FROM IMAGES ' + log_object(self.images))
         for k, v in self.images.items():
             if k == key:
                 logging.info('WITH KEY ' + str(key) + ' GOT ' + str(v))
@@ -275,6 +276,10 @@ class Storage(DictHandler):
     @property
     def text(self):
         return self.request['request'].get('original_utterance', None)
+
+    @text.setter
+    def text(self, text):
+        self.request['request']['original_utterance'] = text
 
     @property
     def payload(self):
@@ -332,7 +337,7 @@ class Response(DictHandler):
         self['response']['end_session'] = bool(end)
 
     def send(self):
-        logging.info('SENDING ' + dump_json(self.data))
+        logging.info('SENDING ' + log_object(self.data))
         data = jsonify(self.data)
         if self.end:
             self.storage.remove(self.storage.id)

@@ -21,8 +21,17 @@ stream_handler.setFormatter(FORMATTER)
 logger.addHandler(stream_handler)
 
 
-def dump_json(dct):
-    return json.dumps(dct, ensure_ascii=False)
+class LogEncoder(json.JSONEncoder):
+    def encode(self, o):
+        try:
+            return super().encode(o)
+        except TypeError:
+            return super().encode(str(o))
+
+
+def log_object(dct):
+    # return json.dumps(dct, ensure_ascii=False, cls=LogEncoder)
+    return str(dct)
 
 
 def log_request(response):
@@ -31,3 +40,9 @@ def log_request(response):
 
 
 logging.info('LOGGING SET UP')
+
+if __name__ == '__main__':
+    def f():
+        return None
+
+    logging.info(log_object({'functions': {'a': lambda: None, 'b': lambda: None, 'c': [f, 'слова, функции', {'functions': {'a': lambda: None, 'b': lambda: None, 'c': [f, 'слова, функции', {'functions': {'a': lambda: None, 'b': lambda: None, 'c': [f, 'слова, функции', {'functions': {'a': lambda: None, 'b': lambda: None, 'c': [f, 'слова, функции']}}]}}]}}]}}))

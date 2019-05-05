@@ -1,6 +1,6 @@
 from flask import Flask, request
 
-from settings import logging, dump_json
+from settings import logging, log_object
 from dialog_json_handler import Storage, Response, Button, Card
 
 from input_parser import Sentence
@@ -15,7 +15,7 @@ def error_404(*args):
     logging.error('404')
     logging.error(request.url)
     logging.error(str(dict(request.headers)))
-    logging.error(dump_json(request.json))
+    logging.error(log_object(request.json))
 
 
 @app.route('/post', methods=['POST'])
@@ -32,10 +32,10 @@ def dialog(data):
     user = Storage(data)
     resp = Response(data)
     logging.info('CONTINUE ' + str(user.id))
-    logging.info('INPUT ' + dump_json(user.request))
+    logging.info('INPUT ' + log_object(user.request))
     logging.info('STATE ' + str(user.state) + ' ' + str(user.state_init) + ' DELAY ' + str(user.delay))
     logging.info('TYPE ' + str(user.type))
-    logging.info('STORAGE ' + str(id(user)) + ' ' + dump_json(user.data))
+    logging.info('STORAGE ' + str(id(user)) + ' ' + log_object(user.data))
 
     user.pre_step()
     result = handle_state(user, resp)
@@ -56,7 +56,7 @@ def handle_state(user, resp):
             else:
                 fios = user.entity(t='fio')
                 if fios and 'first_name' in fios[0]['value']:
-                    logging.info('NAME RECOGNIZED ' + dump_json(fios))
+                    logging.info('NAME RECOGNIZED ' + log_object(fios))
                     name = fios[0]['value']['first_name']
                     user['name'] = name[0].upper() + name[1:]
                     resp.msg('Очень приятно.')
@@ -76,7 +76,15 @@ def handle_state(user, resp):
                          % (user['name'],))
             else:
                 if sent.sentence_collision(['близкий', 'поблизости']) and not user['position']:
-                    user['next'].append(user.state)
+                    def callback(user=user, text=user.text):
+                        user.state = 1
+                        user.init_state(True)
+                        user.text = text
+                        logging.info('continue after position recognition ' + log_object(
+                            {'text': user.text, 'pos': user['position'], 'state': (user.state, user.delay)}
+                        ))
+
+                    user['next'].append(callback)
                     user.state = -1
                     resp.msg('{}?'.format(sent.find(['близкий', 'поблизости'])[0][0].word))
                 elif sent.word_collision('нахожусь'):
@@ -88,7 +96,7 @@ def handle_state(user, resp):
                     geo = user.geo_entity()
                     try:
                         if geo:
-                            logging.info('RECOGNIZED GEO ' + dump_json(geo))
+                            logging.info('RECOGNIZED GEO ' + log_object(geo))
                             api_res = GeoApi(geo[0], ll=user['position'])
                         else:
                             logging.info('SEARCHING BY WORDS ' + str(key_loc))
@@ -96,7 +104,7 @@ def handle_state(user, resp):
                     except Exception:
                         pass
                     if api_res:
-                        logging.info('RECOGNIZED {} GEO '.format(len(api_res)) + dump_json(api_res.data))
+                        logging.info('RECOGNIZED {} GEO '.format(len(api_res)) + log_object(api_res.data))
                         user['context'] = 'search'
                         resp.msg('Вот что мне удалось найти:\n')
                         mp = MapsApi()
@@ -125,16 +133,10 @@ def handle_state(user, resp):
                 geo = user.geo_entity()
                 api_res = None
                 if geo:
-                    logging.info('RECOGNIZED GEO ' + dump_json(geo))
+                    logging.info('RECOGNIZED GEO ' + log_object(geo))
                     api_res = GeoApi(geo[0])
                 if api_res:
                     loc = api_res[0]
-
-                    def callback():
-                        user['position'] = loc.pos
-                        return -1
-
-                    user['next'].append(callback)
                     mp = MapsApi(bbox=loc.rect)
                     mp.add_marker(loc.pos, 'pm2al')
                     user.add_button(Button(user, None, 'Показать карту', payload={
