@@ -145,6 +145,12 @@ def handle_state(user, resp):
                         'action': 'map'
                     }))
                     user['back'].append(-1)
+
+                    def callback(user=user, pos=loc.pos):
+                        user['position'] = list(pos)
+                        user.next()
+
+                    user['next'].append(callback())
                     user.state = -2
                 else:
                     resp.msg('Простите, не понимаю о чём вы говорите')
