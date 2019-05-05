@@ -216,7 +216,7 @@ def handle_state(user, resp):
                             user.payload = i['payload']
                             return handle_state(user, resp)
                     resp.msg('Простите, не понимаю вашу просьбу')
-                user.delay_up()
+            user.delay_up()
 
         if user.state == -1:
             if user.delay == 0:
