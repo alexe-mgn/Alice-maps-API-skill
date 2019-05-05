@@ -44,7 +44,6 @@ def dialog(data):
 
 
 def handle_state(user, resp):
-
     if user.type == 'SimpleUtterance':
         sent = Sentence(user.text)
         key_loc = sent.filter(
@@ -130,7 +129,12 @@ def handle_state(user, resp):
                     api_res = GeoApi(geo[0])
                 if api_res:
                     loc = api_res[0]
-                    user['position'] = loc.pos
+
+                    def callback():
+                        user['position'] = loc.pos
+                        return -1
+
+                    user['next'].append(callback)
                     mp = MapsApi(bbox=loc.rect)
                     mp.add_marker(loc.pos, 'pm2al')
                     user.add_button(Button(user, None, 'Показать карту', payload={
@@ -151,10 +155,11 @@ def handle_state(user, resp):
             else:
                 if ag > dg:
                     resp.msg('Понятно')
-                    user.state = user['next'].pop(-1)
+                    user.state = user.next()
+                    return handle_state(user, resp)
                 elif dg > ag:
                     resp.msg('Как скажете')
-                    user.state = user['back'].pop(-1)
+                    user.state = user.back()
                     return handle_state(user, resp)
                 else:
                     resp.msg('Не могу понять вашего ответа')

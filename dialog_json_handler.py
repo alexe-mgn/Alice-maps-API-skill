@@ -120,6 +120,20 @@ class Storage(DictHandler):
         super().__init__()
         self.request = req
 
+    def next(self):
+        nxt = self['next'].pop(-1)
+        if hasattr(nxt, '__call__'):
+            return nxt()
+        else:
+            return nxt
+
+    def back(self):
+        bck = self['back'].pop(-1)
+        if hasattr(bck, '__call__'):
+            return bck()
+        else:
+            return bck
+
     @classmethod
     def remove(cls, uid):
         if uid in cls.storage:
