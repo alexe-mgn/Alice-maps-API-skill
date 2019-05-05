@@ -31,7 +31,7 @@ class LogEncoder(json.JSONEncoder):
 
 def log_object(dct):
     # return json.dumps(dct, ensure_ascii=False, cls=LogEncoder)
-    return str(dct)
+    return str(dct)[:15000]
 
 
 def log_request(response):

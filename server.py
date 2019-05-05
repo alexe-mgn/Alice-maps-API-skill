@@ -9,6 +9,13 @@ from APIs import GeoApi, MapsApi, SearchApi
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
+hint = 'Что вы хотите узнать, %s? Я могу:\n\n' \
+       '- Найти определённое место по названию\n' \
+       '"найди|где ...]"\n' \
+       'Дополнительно:\n' \
+       '"Я нахожусь ..." - для улучшения поиска\n' \
+       '"Что ты умеешь|можешь..."'
+
 
 @app.errorhandler(404)
 def error_404(*args):
@@ -68,12 +75,7 @@ def handle_state(user, resp):
         if user.state == 1:
             if user.delay == 0:
                 user.init_state()
-                resp.msg('Что вы хотите узнать, %s? Я могу:\n\n'
-                         '- Найти определённое место по названию\n'
-                         '"найди|где ...]"\n'
-                         'Дополнительно:\n'
-                         '"Я нахожусь ..." - для улучшения поиска'
-                         % (user['name'],))
+                resp.msg(hint % (user['name'],))
             else:
                 if sent.sentence_collision(['близкий', 'поблизости']) and not user['position']:
                     def callback(user=user, request=user.request):
@@ -123,6 +125,10 @@ def handle_state(user, resp):
                         user.add_button(btn)
                     else:
                         resp.msg('Простите, не могу понять, о чём вы говорите. Попробуйте ещё раз')
+
+                elif sent.sentence_collision(['умеешь', 'можешь']):
+                    resp.msg(hint % (user['name'],))
+
                 else:
                     resp.msg('Простите, не понимаю вашу просьбу')
             user.delay_up()
