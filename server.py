@@ -40,11 +40,11 @@ def dialog(data):
     logging.info('STORAGE ' + str(id(user)) + ' ' + dump_json(user.data))
 
     user.pre_step()
-    sent = Sentence(user.text)
-    key_loc = sent.filter(['где', 'найти', 'близкий', 'радиус', 'от', 'до', 'наиболее', 'более'])
-    ag, dg = sent.agreement
 
     if user.type == 'SimpleUtterance':
+        sent = Sentence(user.text)
+        key_loc = sent.filter(['где', 'найти', 'близкий', 'радиус', 'от', 'до', 'наиболее', 'более'])
+        ag, dg = sent.agreement
         if user.state == 0:
             if user.delay == 0:
                 user.init_state()
