@@ -107,11 +107,13 @@ def dialog(data):
             if pl.get('action', None) == 'map':
                 resp.text = 'Показать карту не удалось'
                 btn = Button(user, None, 'Показать на Яндекс.Картах', url=pl['url'])
-                user.add_button(btn)
                 img = user.upload_image('map', pl['image_url'])
                 if img:
                     card = Card(user, '', img)
+                    card['button'] = btn.send()
                     user.add_card(card)
+                else:
+                    user.add_button(btn)
         else:
             resp.text = 'Выполняю'
 
