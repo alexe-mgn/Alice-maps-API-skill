@@ -156,20 +156,59 @@ def handle_state(user, resp):
                     else:
                         resp.msg('Простите, не могу понять, о каком месте вы говорите. Попробуйте ещё раз')
 
-                elif user.get('variants', None) and sent.sentence_collision(['вариант', 'подробный', 'расскажи']):
-                    if user.entity(t='number'):
-                        vn = int(user.entity(t='number')[0]['value'])
-                        if 1 <= vn <= len(user['variants']):
-                            user['vn'] = vn - 1
-                            user['back'].append(1)
-                            user.state = 2
-                        else:
-                            resp.msg('Я что-то не помню варианта под таким номером.')
-                    else:
-                        resp.msg('Я могу рассказать вам поподробнее про любой из вариантов.\n'
-                                 'Сначала выберите вариант, а потом скажите, какую информацию хотите узнать,\n'
-                                 'Либо сразу задайте вопрос про такой-то вариант')
+                elif user.get('variants', None):
+                    if sent.sentence_collision(['вариант', 'подробный', 'расскажи']):
+                        if user.entity(t='number'):
+                            vn = int(user.entity(t='number')[0]['value'])
+                            if 1 <= vn <= len(user['variants']):
+                                user['vn'] = vn - 1
+                                for i in ['Время работы', 'телефон', 'адрес', 'покажи на карте']:
+                                    user.add_button(Button(user, i, i, attach=False, payload={'input': i}))
+                                resp.msg('Что вы хотите узнать про этот вариант?')
+                                return resp
+                            else:
+                                resp.msg('Я что-то не помню варианта под таким номером.')
+                    if 'vn' in user:
+                        user['context'] = 'variant'
+                        v = user['variants'][user['vn']]
+                        if sent.word_collision('карта'):
+                            mp = MapsApi(bbox=v.rect)
+                            mp.add_marker(v.pos, 'pm2bll')
+                            ym = mp.get_url(False)
+                            if user['position']:
+                                mp.add_marker(user['position'], 'pm2al')
+                                mp.include_view(user['position'])
 
+                            mid = user.upload_image('map', mp.get_url(True))
+                            resp.msg('Показать карту не удалось')
+                            btn = Button(user, 'map_url', 'Показать на Яндекс.Картах', url=ym)
+                            if mid:
+                                card = Card(user, 'Показать на Яндекс.Картах', mid)
+                                card['button'] = btn.send()
+                                user.add_card(card)
+                            else:
+                                user.add_button(btn)
+                        elif sent.sentence_collision(['имя', 'название', 'что', 'тип']):
+                            resp.msg(v.name)
+                        elif sent.sentence_collision(['адрес', 'находиться']):
+                            resp.msg('Полный адрес:\n' + v.formatted_address)
+                        elif sent.sentence_collision(['время', 'когда', 'часы', 'сейчас', 'работает']):
+                            wh = v.workhours
+                            if wh:
+                                resp.msg(wh['text'])
+                                resp.msg(wh['State']['text'])
+                                resp.msg('Сейчас {}'.format('открыто' if wh['State']['is_open_now'] == '1' else 'закрыто'))
+                            else:
+                                resp.msg('Данных о времени работы нет')
+                        elif sent.sentence_collision(['телефон', 'сотовый', 'номер']):
+                            t = v.phone_numbers
+                            if t:
+                                resp.msg('Известные номера для этого объекта:')
+                                resp.msg('\n'.join(t))
+                            else:
+                                resp.msg('Нет информации о номере телефона')
+                        elif dg > .2:
+                            resp.msg('Как скажете')
                 else:
                     for i in user.buttons[::-1]:
                         if sent.sentence_collision(i['title']):
@@ -177,57 +216,7 @@ def handle_state(user, resp):
                             user.payload = i['payload']
                             return handle_state(user, resp)
                     resp.msg('Простите, не понимаю вашу просьбу')
-            user.delay_up()
-
-        if user.state == 2:
-            user['context'] = 'variant'
-            v = user['variants'][user['vn']]
-            user.delay_up()
-            if sent.word_collision('карта'):
-                mp = MapsApi(bbox=v.rect)
-                mp.add_marker(v.pos, 'pm2bll')
-                ym = mp.get_url(False)
-                if user['position']:
-                    mp.add_marker(user['position'], 'pm2al')
-                    mp.include_view(user['position'])
-
-                mid = user.upload_image('map', mp.get_url(True))
-                resp.msg('Показать карту не удалось')
-                btn = Button(user, 'map_url', 'Показать на Яндекс.Картах', url=ym)
-                if mid:
-                    card = Card(user, 'Показать на Яндекс.Картах', mid)
-                    card['button'] = btn.send()
-                    user.add_card(card)
-                else:
-                    user.add_button(btn)
-            elif sent.sentence_collision(['имя', 'название', 'что', 'тип']):
-                resp.msg(v.name)
-            elif sent.sentence_collision(['адрес', 'находиться']):
-                resp.msg('Полный адрес:\n' + v.formatted_address)
-            elif sent.sentence_collision(['время', 'когда', 'часы', 'сейчас', 'работает']):
-                wh = v.workhours
-                if wh:
-                    resp.msg(wh['text'])
-                    resp.msg(wh['State']['text'])
-                    resp.msg('Сейчас {}'.format('открыто' if wh['State']['is_open_now'] == '1' else 'закрыто'))
-                else:
-                    resp.msg('Данных о времени работы нет')
-            elif sent.sentence_collision(['телефон', 'сотовый', 'номер']):
-                t = v.phone_numbers
-                if t:
-                    resp.msg('Известные номера для этого объекта:')
-                    resp.msg('\n'.join(t))
-                else:
-                    resp.msg('Нет информации о номере телефона')
-            elif dg > .2:
-                resp.msg('Как скажете')
-            else:
-                resp.msg('Что вы хотите узнать?')
-                for i in ['Время работы', 'телефон', 'адрес', 'покажи на карте']:
-                    user.add_button(Button(user, None, i, attach=False, payload={'input': i}))
-                return resp
-            user.state = user.back()
-            return handle_state(user, resp)
+                user.delay_up()
 
         if user.state == -1:
             if user.delay == 0:
