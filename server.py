@@ -12,7 +12,7 @@ app.config['JSON_AS_ASCII'] = False
 hint = 'Что вы хотите узнать, %s? Я могу:\n\n' \
        '- Найти определённое место по названию\n' \
        '(можете указать искать "место" или "объект"/"организацию")\n' \
-       '"найди|где ...]"\n' \
+       '"найди|где ["место" / "объект"] ..."\n' \
        'Про любой из найденных результатов я могу рассказать подробнее\n' \
        '"... подробнее | вариант | расскажи ... <номер>"\n' \
        '\n' \
@@ -162,7 +162,9 @@ def handle_state(user, resp):
             user['context'] = 'variant'
             v = user['variants'][user['vn']]
             user.delay_up()
-            if sent.sentence_collision(['имя', 'название', 'что', 'тип']):
+            if sent.word_collision('карта'):
+                resp.msg('Работа в прогрессе')
+            elif sent.sentence_collision(['имя', 'название', 'что', 'тип']):
                 resp.msg(v.name)
             elif sent.sentence_collision(['адрес', 'находиться']):
                 resp.msg('Полный адрес:\n' + v.formatted_address)
