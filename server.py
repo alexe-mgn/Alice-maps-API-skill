@@ -150,7 +150,7 @@ def handle_state(user, resp):
                         user['position'] = list(pos)
                         user.next()
 
-                    user['next'].append(callback())
+                    user['next'].append(callback)
                     user.state = -2
                 else:
                     resp.msg('Простите, не понимаю о чём вы говорите')
