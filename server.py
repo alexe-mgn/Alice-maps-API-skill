@@ -125,7 +125,9 @@ def handle_state(user, resp):
                         else:
                             def callback(user=user):
                                 user.state = 1
+                                user.init_state(True)
                                 user.text = 'Найди ' + user.text
+                                logging.info('SWITCHING CALLBACK ' + log_object(user.data))
 
                             user['next'].append(callback)
                             user.state = -3
