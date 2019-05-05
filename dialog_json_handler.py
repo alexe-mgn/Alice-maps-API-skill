@@ -110,7 +110,11 @@ class Storage(DictHandler):
         self.buttons = []
         self.cards = []
         self.images = {}
-        self.data = {}
+        self.data = {
+            'position': None,
+            'next': [],
+            'back': []
+        }
 
     def __init__(self, req):
         super().__init__()

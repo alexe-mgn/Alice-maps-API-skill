@@ -95,6 +95,13 @@ class Sentence:
     def __str__(self):
         return ' '.join(e[0].normal_form for e in self.data if e)
 
+    def get_word(self, word):
+        res = []
+        for i in self.data:
+            if i.word_collision(word):
+                res.append(i)
+        return res
+
     def word_collision(self, other):
         return Word(other).sentence_collision(self)
     

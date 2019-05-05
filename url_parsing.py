@@ -44,7 +44,9 @@ class Str:
     def query(dct):
         res = dct.copy()
         for k, v in dct.items():
-            if k == 'pt':
+            if v is None:
+                pass
+            elif k == 'pt':
                 res[k] = '~'.join(
                     [(
                             Str.pos(m[0]) + ((',' + m[1]) if len(m) > 1 and m[1] else '')

@@ -40,6 +40,9 @@ def dialog(data):
     logging.info('STORAGE ' + str(id(user)) + ' ' + dump_json(user.data))
 
     user.pre_step()
+    sent = Sentence(user.text)
+    key_loc = sent.filter(['где', 'найти', 'близкий', 'радиус', 'от', 'до', 'наиболее', 'более'])
+    ag, dg = sent.agreement
 
     if user.type == 'SimpleUtterance':
         if user.state == 0:
@@ -64,18 +67,28 @@ def dialog(data):
                 resp.msg('Что вы хотите узнать, %s? Я могу:\n\n'
                          '- Найти определённое место по названию\n'
                          '"найди|где ... [В радиусе ... (в км)]"\n'
+                         'Дополнительно:\n'
+                         '"Я нахожусь ..." - для улучшения поиска'
                          % (user['name'],))
             else:
-                text = Sentence(user.text)
-
-                if text.sentence_collision(['где', 'найти']):
+                if sent.word_collision('близкий') and not user['position']:
+                    user['next'].append(user.state)
+                    user.state = -1
+                    resp.msg('{}?'.format(sent.get_word('близкий')[0]))
+                elif sent.word_collision('нахожусь'):
+                    user['next'].append(user.state)
+                    user.state = -1
+                    user.init_state(True)
+                elif sent.sentence_collision(['где', 'найти']):
                     api_res = None
                     geo = user.geo_entity()
                     try:
                         if geo:
-                            api_res = GeoApi(geo[0])
+                            logging.info('RECOGNIZED GEO ' + dump_json(geo))
+                            api_res = GeoApi(geo[0], ll=user['position'])
                         else:
-                            api_res = SearchApi(str(text.filter(['где', 'найти', 'близкий', 'радиус'])))
+                            logging.info('SEARCHING BY WORDS ' + str(key_loc))
+                            api_res = SearchApi(str(key_loc), ll=user['position'])
                     except Exception:
                         pass
                     if api_res:
@@ -98,13 +111,53 @@ def dialog(data):
                         resp.msg('Простите, не могу понять, о чём вы говорите. Попробуйте ещё раз')
                 else:
                     resp.msg('Простите, не понимаю вашу просьбу')
-
             user.delay_up()
+
+        if user.state == -1:
+            if user.delay == 0:
+                user.init_state()
+                resp.msg('Где вы находитесь?')
+            else:
+                geo = user.geo_entity()
+                api_res = None
+                if geo:
+                    logging.info('RECOGNIZED GEO ' + dump_json(geo))
+                    api_res = GeoApi(geo[0])
+                if api_res:
+                    loc = api_res[0]
+                    user['position'] = loc.pos
+                    mp = MapsApi(bbox=loc.rect)
+                    mp.add_marker(loc.pos, 'pm2al')
+                    user.add_button(Button(user, None, 'Показать карту', payload={
+                        'url': mp.get_url(False),
+                        'image_url': mp.get_url(True),
+                        'action': 'map'
+                    }))
+                    user['back'].append(-1)
+                    user.state = -2
+                else:
+                    resp.msg('Простите, не понимаю о чём вы говорите')
+            user.delay_up()
+
+        if user.state == -2:
+            if user.delay == 0:
+                user.init_state()
+                resp.msg('Это здесь?')
+            else:
+                if ag > dg:
+                    resp.msg('Понятно')
+                    user.state = user['next'].pop(-1)
+                elif dg > ag:
+                    resp.msg('Как скажете')
+                    user.state = user['back'].pop(-1)
+                else:
+                    resp.msg('Не могу понять вашего ответа')
 
     elif user.type == 'ButtonPressed':
         if user.payload:
             pl = user.payload
-            if pl.get('action', None) == 'map':
+            action = pl.get('action')
+            if action == 'map':
                 resp.text = 'Показать карту не удалось'
                 btn = Button(user, None, 'Показать на Яндекс.Картах', url=pl['url'])
                 img = user.upload_image('map', pl['image_url'])

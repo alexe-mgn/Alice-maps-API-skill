@@ -320,7 +320,9 @@ class GeoApi:
     def __init__(self, geocode, **kwargs):
         kwargs['geocode'] = geocode
         for k, v in kwargs.items():
-            if isinstance(v, str) or hasattr(v, '__int__'):
+            if v is None:
+                pass
+            elif isinstance(v, str) or hasattr(v, '__int__'):
                 pass
             elif hasattr(v, 'str_parameter'):
                 kwargs[k] = str(v)
@@ -364,7 +366,9 @@ class SearchApi:
     def __init__(self, text, **kwargs):
         kwargs['text'] = text
         for k, v in kwargs.items():
-            if isinstance(v, str) or hasattr(v, '__int__'):
+            if v is None:
+                pass
+            elif isinstance(v, str) or hasattr(v, '__int__'):
                 pass
             elif hasattr(v, 'str_parameter'):
                 kwargs[k] = v.str_parameter()
