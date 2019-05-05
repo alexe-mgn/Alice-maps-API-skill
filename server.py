@@ -163,7 +163,7 @@ def handle_state(user, resp):
                             if 1 <= vn <= len(user['variants']):
                                 user['vn'] = vn - 1
                                 for i in ['Время работы', 'телефон', 'адрес', 'покажи на карте']:
-                                    user.add_button(Button(user, i, i, attach=False, payload={'input': i}))
+                                    user.add_button(Button(user, i, i, attach=False, payload={'input': i}), life=-1)
                                 resp.msg('Что вы хотите узнать про этот вариант?')
                                 return resp
                             else:
@@ -171,6 +171,7 @@ def handle_state(user, resp):
                     if 'vn' in user:
                         user['context'] = 'variant'
                         v = user['variants'][user['vn']]
+
                         if sent.word_collision('карта'):
                             mp = MapsApi(bbox=v.rect)
                             mp.add_marker(v.pos, 'pm2bll')
@@ -188,10 +189,13 @@ def handle_state(user, resp):
                                 user.add_card(card)
                             else:
                                 user.add_button(btn)
+
                         elif sent.sentence_collision(['имя', 'название', 'что', 'тип']):
                             resp.msg(v.name)
+
                         elif sent.sentence_collision(['адрес', 'находиться']):
                             resp.msg('Полный адрес:\n' + v.formatted_address)
+
                         elif sent.sentence_collision(['время', 'когда', 'часы', 'сейчас', 'работает']):
                             wh = v.workhours
                             if wh:
@@ -200,6 +204,7 @@ def handle_state(user, resp):
                                 resp.msg('Сейчас {}'.format('открыто' if wh['State']['is_open_now'] == '1' else 'закрыто'))
                             else:
                                 resp.msg('Данных о времени работы нет')
+
                         elif sent.sentence_collision(['телефон', 'сотовый', 'номер']):
                             t = v.phone_numbers
                             if t:
@@ -207,8 +212,12 @@ def handle_state(user, resp):
                                 resp.msg('\n'.join(t))
                             else:
                                 resp.msg('Нет информации о номере телефона')
-                        elif dg > .2:
-                            resp.msg('Как скажете')
+                        else:
+                            for i in user.buttons[::-1]:
+                                if sent.sentence_collision(i['title']):
+                                    user.type = 'ButtonPressed'
+                                    user.payload = i['payload']
+                                    return handle_state(user, resp)
                 else:
                     for i in user.buttons[::-1]:
                         if sent.sentence_collision(i['title']):
