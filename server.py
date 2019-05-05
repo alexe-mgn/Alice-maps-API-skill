@@ -87,10 +87,12 @@ def handle_state(user, resp):
                     user['next'].append(callback)
                     user.state = -1
                     resp.msg('{}?'.format(sent.find(['близкий', 'поблизости'])[0][0].word))
+
                 elif sent.word_collision('нахожусь'):
                     user['next'].append(user.state)
                     user.state = -1
                     user.init_state(True)
+
                 elif sent.sentence_collision(['где', 'найти']):
                     api_res = None
                     geo = user.geo_entity()
@@ -147,8 +149,9 @@ def handle_state(user, resp):
                     user['back'].append(-1)
 
                     def callback(user=user, pos=loc.pos):
+                        logging.info('CALLBACK setting position')
                         user['position'] = list(pos)
-                        user.next()
+                        return user.next()
 
                     user['next'].append(callback)
                     user.state = -2
