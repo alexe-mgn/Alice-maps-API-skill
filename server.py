@@ -76,10 +76,10 @@ def handle_state(user, resp):
                          % (user['name'],))
             else:
                 if sent.sentence_collision(['близкий', 'поблизости']) and not user['position']:
-                    def callback(user=user, text=user.text):
+                    def callback(user=user, request=user.request):
                         user.state = 1
                         user.init_state(True)
-                        user.text = text
+                        user.request = request
                         logging.info('continue after position recognition ' + log_object(
                             {'text': user.text, 'pos': user['position'], 'state': (user.state, user.delay)}
                         ))
