@@ -71,7 +71,7 @@ class Toponym:
             return self['metaDataProperty']['GeocoderMetaData']['Address']['formatted']
         else:
             if not self.biz:
-                pass
+                return self.data['properties']['GeocoderMetaData']['text']
             else:
                 return self.data['properties']['CompanyMetaData']['address']
 

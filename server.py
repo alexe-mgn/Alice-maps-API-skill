@@ -121,7 +121,7 @@ def handle_state(user, resp):
                         if user['position']:
                             mp.add_marker(user['position'], 'pm2al')
                         for n, i in enumerate(api_res, 1):
-                            resp.msg('{} - {}'.format(n, i.formatted_address))
+                            resp.msg('{} - {}\n\t{}'.format(n, i.name, i.formatted_address))
                             user['variants'].append(i)
                             mp.include_view(i.rect)
                             mp.add_marker(i.pos, 'pm2rdm' + str(n))
@@ -158,7 +158,9 @@ def handle_state(user, resp):
             user['context'] = 'variant'
             ac = False
             v = user['variants'][user['vn']]
-            if sent.sentence_collision(['адрес', 'находиться']):
+            if sent.sentence_collision(['имя', 'название', 'что', 'тип']):
+                resp.msg(v.name)
+            elif sent.sentence_collision(['адрес', 'находиться']):
                 resp.msg('Полный адрес:\n' + v.formatted_address)
                 ac = True
             elif sent.sentence_collision(['время', 'когда', 'часы', 'сейчас', 'работает']):
