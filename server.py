@@ -155,11 +155,11 @@ def handle_state(user, resp):
                                  'Либо сразу задайте вопрос про такой-то вариант')
 
                 else:
-                    for i in user.buttons[::-1]:
-                        if sent.sentence_collision(i['text']):
-                            user.type = 'ButtonPressed'
-                            user.payload = i['payload']
-                            return handle_state(user, resp)
+                    # for i in user.buttons[::-1]:
+                    #     if sent.sentence_collision(i['text']):
+                    #         user.type = 'ButtonPressed'
+                    #         user.payload = i['payload']
+                    #         return handle_state(user, resp)
                     resp.msg('Простите, не понимаю вашу просьбу')
             user.delay_up()
 
