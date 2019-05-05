@@ -68,6 +68,7 @@ class Card(DictHandler):
         self.visible = True
         self.data = {
             'title': text,
+            'text': text,
             'type': 'BigImage',
             'image_id': image
         }
