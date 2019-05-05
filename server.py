@@ -43,7 +43,8 @@ def dialog(data):
 
     if user.type == 'SimpleUtterance':
         sent = Sentence(user.text)
-        key_loc = sent.filter(['где', 'найти', 'близкий', 'радиус', 'от', 'до', 'наиболее', 'более'])
+        key_loc = sent.filter(
+            ['где', 'найти', 'близкий', 'радиус', 'от', 'до', 'наиболее', 'более', 'нахожусь', 'поблизости'])
         ag, dg = sent.agreement
         if user.state == 0:
             if user.delay == 0:
@@ -71,10 +72,10 @@ def dialog(data):
                          '"Я нахожусь ..." - для улучшения поиска'
                          % (user['name'],))
             else:
-                if sent.word_collision('близкий') and not user['position']:
+                if sent.sentence_collision(['близкий', 'поблизости']) and not user['position']:
                     user['next'].append(user.state)
                     user.state = -1
-                    resp.msg('{}?'.format([e for e in sent if e.word_collision('близкий')][0][0].word))
+                    resp.msg('{}?'.format(sent.filter(['близкий', 'поблизости'])[0][0].word))
                 elif sent.word_collision('нахожусь'):
                     user['next'].append(user.state)
                     user.state = -1
@@ -152,6 +153,7 @@ def dialog(data):
                     user.state = user['back'].pop(-1)
                 else:
                     resp.msg('Не могу понять вашего ответа')
+            user.delay_up()
 
     elif user.type == 'ButtonPressed':
         if user.payload:
