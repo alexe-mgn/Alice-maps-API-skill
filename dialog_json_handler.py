@@ -236,9 +236,10 @@ class Storage(DictHandler):
                 return i
 
     def add_button(self, button):
-        old = self.get_button(button.id)
-        if old:
-            self.buttons.remove(old)
+        if button.id is not None:
+            old = self.get_button(button.id)
+            if old:
+                self.buttons.remove(old)
         self.buttons.append(button)
 
     def add_card(self, card):
