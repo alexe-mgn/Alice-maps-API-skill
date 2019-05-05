@@ -212,13 +212,7 @@ def handle_state(user, resp):
                                 resp.msg('\n'.join(t))
                             else:
                                 resp.msg('Нет информации о номере телефона')
-                        else:
-                            for i in user.buttons[::-1]:
-                                if sent.sentence_collision(i['title']):
-                                    user.type = 'ButtonPressed'
-                                    user.payload = i['payload']
-                                    return handle_state(user, resp)
-                else:
+                if not resp.text:
                     for i in user.buttons[::-1]:
                         if sent.sentence_collision(i['title']):
                             user.type = 'ButtonPressed'
