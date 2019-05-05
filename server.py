@@ -127,6 +127,7 @@ def handle_state(user, resp):
 
                             user['next'].append(callback)
                             user.state = -3
+                            return handle_state(user, resp)
                     except Exception:
                         pass
                     if api_res:
