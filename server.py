@@ -1,10 +1,9 @@
 from flask import Flask, request
 
-from settings import logging, log_object
-from dialog_json_handler import Storage, Response, Button, Card
-
-from input_parser import Sentence
 from APIs import GeoApi, MapsApi, SearchApi
+from dialog_json_handler import Storage, Response, Button, Card
+from input_parser import Sentence
+from settings import logging, log_object
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -73,10 +72,18 @@ def handle_state(user, resp):
                     name = fios[0]['value']['first_name']
                     user['name'] = name[0].upper() + name[1:]
                     resp.msg('Очень приятно.')
+                    user.add_button(
+                        Button(user, 'hint', 'Что ты умеешь?', attach=False, payload={'input': 'Что ты умеешь?'}))
+                    user.add_button(
+                        Button(user, 'hint', 'Найти', attach=False, payload={'input': 'Найти'}))
                     user.state = 1
                 else:
                     resp.msg('Простите, я не расслышала вашего имени. Повторите, пожалуйста.')
             user.delay_up()
+
+        if user.state != 0 and sent.sentence_collision(['умеешь', 'можешь']):
+            resp.msg(hint % (user['name'],))
+            return resp
 
         if user.state == 1:
             if user.delay == 0:
@@ -110,9 +117,16 @@ def handle_state(user, resp):
                                 not sent.sentence_collision(['объект', 'организация']):
                             logging.info('RECOGNIZED GEO ' + log_object(geo))
                             api_res = GeoApi(geo[0], ll=user['position'])
-                        else:
+                        elif len(key_loc) > 0:
                             logging.info('SEARCHING BY WORDS ' + str(key_loc))
                             api_res = SearchApi(str(key_loc), ll=user['position'])
+                        else:
+                            def callback(user=user):
+                                user.state = 1
+                                user.text = 'Найди ' + user.text
+
+                            user['next'].append(callback)
+                            user.state = -3
                     except Exception:
                         pass
                     if api_res:
@@ -137,9 +151,6 @@ def handle_state(user, resp):
                         user.add_button(btn)
                     else:
                         resp.msg('Простите, не могу понять, о каком месте вы говорите. Попробуйте ещё раз')
-
-                elif sent.sentence_collision(['умеешь', 'можешь']):
-                    resp.msg(hint % (user['name'],))
 
                 elif user.get('variants', None) and sent.sentence_collision(['вариант', 'подробный', 'расскажи']):
                     if user.entity(t='number'):
@@ -262,6 +273,14 @@ def handle_state(user, resp):
                     return handle_state(user, resp)
                 else:
                     resp.msg('Не могу понять вашего ответа')
+            user.delay_up()
+
+        if user.state == -3:
+            if user.delay == 0:
+                resp.msg('Что вы желаете найти?')
+            else:
+                user.state = user.next()
+                return handle_state(user, resp)
             user.delay_up()
 
     elif user.type == 'ButtonPressed':
