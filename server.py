@@ -73,9 +73,10 @@ def handle_state(user, resp):
                     user['name'] = name[0].upper() + name[1:]
                     resp.msg('Очень приятно.')
                     user.add_button(
-                        Button(user, 'hint', 'Что ты умеешь?', attach=False, payload={'input': 'Что ты умеешь?'}))
+                        Button(user, 'hint', 'Что ты умеешь?', attach=False, payload={'input': 'Что ты умеешь?'},
+                               life=-1))
                     user.add_button(
-                        Button(user, 'hint', 'Найти', attach=False, payload={'input': 'Найти'}))
+                        Button(user, 'find_hint', 'Найти', attach=False, payload={'input': 'Найти'}, life=-1))
                     user.state = 1
                 else:
                     resp.msg('Простите, я не расслышала вашего имени. Повторите, пожалуйста.')
@@ -110,6 +111,7 @@ def handle_state(user, resp):
                     user.init_state(True)
 
                 elif sent.sentence_collision(['где', 'найти', 'искать']):
+                    user['context'] = 'search'
                     api_res = None
                     geo = user.geo_entity()
                     try:
@@ -132,7 +134,6 @@ def handle_state(user, resp):
                         pass
                     if api_res:
                         logging.info('RECOGNIZED {} GEO '.format(len(api_res)) + log_object(api_res.data))
-                        user['context'] = 'search'
                         user['variants'] = []
                         resp.msg('Вот что мне удалось найти:\n')
                         mp = MapsApi()
