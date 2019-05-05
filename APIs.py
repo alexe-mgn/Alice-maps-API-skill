@@ -93,7 +93,7 @@ class Toponym:
         return None
 
     @property
-    def phones(self):
+    def phone_numbers(self):
         res = []
         if self.biz:
             for p in self.data['properties']['CompanyMetaData'].get('Phones', []):

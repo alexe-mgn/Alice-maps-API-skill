@@ -11,6 +11,7 @@ app.config['JSON_AS_ASCII'] = False
 
 hint = 'Что вы хотите узнать, %s? Я могу:\n\n' \
        '- Найти определённое место по названию\n' \
+       '(можете указать искать "место" или "объект"/"организацию")\n' \
        '"найди|где ...]"\n' \
        'Про любой из найденных результатов я могу рассказать подробнее\n' \
        '"... подробнее | вариант | расскажи ... <номер>"\n' \
@@ -104,7 +105,8 @@ def handle_state(user, resp):
                     api_res = None
                     geo = user.geo_entity()
                     try:
-                        if geo:
+                        if (geo or sent.word_collision('место')) and \
+                                not sent.sentence_collision(['объект', 'организация']):
                             logging.info('RECOGNIZED GEO ' + log_object(geo))
                             api_res = GeoApi(geo[0], ll=user['position'])
                         else:
@@ -142,13 +144,15 @@ def handle_state(user, resp):
                     if user.entity(t='number'):
                         vn = int(user.entity(t='number')[0]['value'])
                         if 1 <= vn <= len(user['variants']):
-                            user['vn'] = vn
+                            user['vn'] = vn - 1
                             user['back'].append(1)
                             user.state = 2
                         else:
                             resp.msg('Я что-то не помню варианта под таким номером.')
                     else:
-                        resp.msg('Я могу рассказать вам поподробнее про любой из вариантов')
+                        resp.msg('Я могу рассказать вам поподробнее про любой из вариантов.\n'
+                                 'Сначала выберите вариант, а потом скажите, какую информацию хотите узнать,\n'
+                                 'Либо сразу задайте вопрос про такой-то вариант')
 
                 else:
                     resp.msg('Простите, не понимаю вашу просьбу')
@@ -156,13 +160,12 @@ def handle_state(user, resp):
 
         if user.state == 2:
             user['context'] = 'variant'
-            ac = False
             v = user['variants'][user['vn']]
+            user.delay_up()
             if sent.sentence_collision(['имя', 'название', 'что', 'тип']):
                 resp.msg(v.name)
             elif sent.sentence_collision(['адрес', 'находиться']):
                 resp.msg('Полный адрес:\n' + v.formatted_address)
-                ac = True
             elif sent.sentence_collision(['время', 'когда', 'часы', 'сейчас', 'работает']):
                 wh = v.workhours
                 if wh:
@@ -171,20 +174,20 @@ def handle_state(user, resp):
                     resp.msg('Сейчас {}'.format('открыто' if wh['State']['is_open_now'] == '1' else 'закрыто'))
                 else:
                     resp.msg('Данных о времени работы нет')
-                ac = True
             elif sent.sentence_collision(['телефон', 'сотовый', 'номер']):
-                t = v.phone
+                t = v.phone_numbers
                 if t:
                     resp.msg('Известные номера для этого объекта:')
                     resp.msg('\n'.join(t))
                 else:
                     resp.msg('Нет информации о номере телефона')
-                ac = True
-            if ac:
-                user.state = user.back()
-                return handle_state(user, resp)
-            resp.msg('Что вы хотите узнать?')
-            user.delay_up()
+            elif dg > .2:
+                resp.msg('Как скажете')
+            else:
+                resp.msg('Что вы хотите узнать?')
+                return resp
+            user.state = user.back()
+            return handle_state(user, resp)
 
         if user.state == -1:
             if user.delay == 0:
