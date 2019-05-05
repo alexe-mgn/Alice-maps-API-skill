@@ -112,6 +112,7 @@ def handle_state(user, resp):
 
                 elif sent.sentence_collision(['где', 'найти', 'искать']):
                     user['context'] = 'search'
+                    del user['vn']
                     api_res = None
                     geo = user.geo_entity()
                     try:
@@ -168,7 +169,7 @@ def handle_state(user, resp):
                                 new = True
                             else:
                                 resp.msg('Я что-то не помню варианта под таким номером.')
-                    if 'vn' in user:
+                    if user.get('vn', None) is not None:
                         user['context'] = 'variant'
                         v = user['variants'][user['vn']]
 
