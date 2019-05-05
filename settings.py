@@ -12,9 +12,9 @@ last_handler = logging.FileHandler('last_log.log', mode='w')
 last_handler.setFormatter(FORMATTER)
 logger.addHandler(last_handler)
 
-file_handler = logging.FileHandler('local_log.log', mode='a')
-file_handler.setFormatter(FORMATTER)
-logger.addHandler(file_handler)
+# file_handler = logging.FileHandler('local_log.log', mode='a')
+# file_handler.setFormatter(FORMATTER)
+# logger.addHandler(file_handler)
 
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(FORMATTER)
