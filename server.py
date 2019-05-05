@@ -279,6 +279,7 @@ def handle_state(user, resp):
         if user.state == -3:
             if user.delay == 0:
                 resp.msg('Что вы желаете найти?')
+                user.init_state()
             else:
                 user.state = user.next()
                 return handle_state(user, resp)
