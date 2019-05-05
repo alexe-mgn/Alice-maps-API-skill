@@ -15,7 +15,7 @@ hint = 'Что вы хотите узнать, %s? Я могу:\n\n' \
        '"найди|где ["место" / "объект"] ..."\n' \
        'Про любой из найденных результатов я могу рассказать подробнее\n' \
        '"... подробнее | вариант | расскажи ... <номер>"\n' \
-       '\n' \
+       'Например\n\n' \
        'Дополнительно:\n' \
        '"Я нахожусь ..." - для улучшения поиска\n' \
        '"Что ты умеешь|можешь..."'
@@ -58,7 +58,7 @@ def handle_state(user, resp):
     if user.type == 'SimpleUtterance':
         sent = Sentence(user.text)
         key_loc = sent.filter(
-            ['где', 'найти', 'близкий', 'радиус', 'от', 'до', 'наиболее', 'более', 'нахожусь', 'поблизости'])
+            ['где', 'найти', 'близкий', 'радиус', 'от', 'до', 'наиболее', 'более', 'нахожусь', 'поблизости', 'рядом'])
         ag, dg = sent.agreement
 
         if user.state == 0:
@@ -83,7 +83,7 @@ def handle_state(user, resp):
                 if not user.get('context', None):
                     resp.msg(hint % (user['name'],))
             else:
-                if sent.sentence_collision(['близкий', 'поблизости']) and not user['position']:
+                if sent.sentence_collision(['близкий', 'поблизости', 'рядом']) and not user['position']:
                     def callback(user=user, request=user.request):
                         user.state = 1
                         user.init_state(True)
@@ -94,7 +94,7 @@ def handle_state(user, resp):
 
                     user['next'].append(callback)
                     user.state = -1
-                    resp.msg('{}?'.format(sent.find(['близкий', 'поблизости'])[0][0].word))
+                    resp.msg('{}?'.format(sent.find(['близкий', 'поблизости', 'рядом'])[0][0].word))
 
                 elif sent.word_collision('нахожусь'):
                     user['next'].append(user.state)
