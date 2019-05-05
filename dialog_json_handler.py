@@ -1,4 +1,3 @@
-import multiprocessing as mlpc
 from flask import jsonify
 from settings import logging, dump_json
 from dialogs_API import DialogsApi
@@ -228,6 +227,7 @@ class Storage(DictHandler):
             mid = DialogsApi.upload_image_url(url)
             if mid:
                 self.set_image(key, mid)
+                return mid
         except Exception:
             pass
 

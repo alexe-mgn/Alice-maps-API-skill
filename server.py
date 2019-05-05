@@ -1,4 +1,3 @@
-import multiprocessing as mlpc
 from flask import Flask, request
 
 from settings import logging, dump_json
@@ -6,9 +5,6 @@ from dialog_json_handler import Storage, Response, Button, Card
 
 from input_parser import Sentence
 from APIs import GeoApi, MapsApi, SearchApi
-from dialogs_API import DialogsApi
-
-pool = mlpc.Pool()
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -92,14 +88,11 @@ def dialog(data):
                             mp.include_view(i.rect)
                             mp.add_marker(i.pos, 'pm2rdm' + str(n))
 
-                        def callback(mid):
-                            logging.info('ASSIGNING ' + str(mid))
-                            user.set_image('map', mid)
-
-                        pool.apply_async(DialogsApi.upload_image_url,
-                                         args=(mp.get_url(True),),
-                                         callback=callback)
-                        btn = Button(user, None, 'Показать карту', payload={'action': 'map', 'url': mp.get_url(False)})
+                        btn = Button(user, None, 'Показать карту', payload={
+                            'action': 'map',
+                            'url': mp.get_url(False),
+                            'image_url': mp.get_url(True)
+                        })
                         user.add_button(btn)
                     else:
                         resp.msg('Простите, не могу понять, о чём вы говорите. Попробуйте ещё раз')
@@ -115,7 +108,7 @@ def dialog(data):
                 resp.text = 'Показать карту не удалось'
                 btn = Button(user, None, 'Показать на Яндекс.Картах', url=pl['url'])
                 user.add_button(btn)
-                img = user.get_image('map')
+                img = user.upload_image('map', pl['image_url'])
                 if img:
                     card = Card(user, '', img)
                     user.add_card(card)
