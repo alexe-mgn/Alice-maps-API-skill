@@ -140,7 +140,7 @@ def handle_state(user, resp):
 
                 elif user.get('variants', None) and sent.sentence_collision(['вариант', 'подробный', 'расскажи']):
                     if user.entity(t='number'):
-                        vn = int(user.entity(t='number')['value'])
+                        vn = int(user.entity(t='number')[0]['value'])
                         if 1 <= vn <= len(user['variants']):
                             user['vn'] = vn
                             user['back'].append(1)
