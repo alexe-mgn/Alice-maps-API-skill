@@ -157,15 +157,15 @@ def handle_state(user, resp):
                         resp.msg('Простите, не могу понять, о каком месте вы говорите. Попробуйте ещё раз')
 
                 elif user.get('variants', None):
+                    new = False
                     if sent.sentence_collision(['вариант', 'подробный', 'расскажи']):
                         if user.entity(t='number'):
                             vn = int(user.entity(t='number')[0]['value'])
                             if 1 <= vn <= len(user['variants']):
                                 user['vn'] = vn - 1
                                 for i in ['Время работы', 'телефон', 'адрес', 'покажи на карте']:
-                                    user.add_button(Button(user, i, i, attach=False, payload={'input': i}), life=-1)
-                                resp.msg('Что вы хотите узнать про этот вариант?')
-                                return resp
+                                    user.add_button(Button(user, i, i, attach=False, payload={'input': i}, life=-1))
+                                new = True
                             else:
                                 resp.msg('Я что-то не помню варианта под таким номером.')
                     if 'vn' in user:
@@ -201,7 +201,8 @@ def handle_state(user, resp):
                             if wh:
                                 resp.msg(wh['text'])
                                 resp.msg(wh['State']['text'])
-                                resp.msg('Сейчас {}'.format('открыто' if wh['State']['is_open_now'] == '1' else 'закрыто'))
+                                resp.msg(
+                                    'Сейчас {}'.format('открыто' if wh['State']['is_open_now'] == '1' else 'закрыто'))
                             else:
                                 resp.msg('Данных о времени работы нет')
 
@@ -212,6 +213,8 @@ def handle_state(user, resp):
                                 resp.msg('\n'.join(t))
                             else:
                                 resp.msg('Нет информации о номере телефона')
+                        elif new:
+                            resp.msg('Что вы хотите узнать про этот вариант?')
                 if not resp.text:
                     for i in user.buttons[::-1]:
                         if sent.sentence_collision(i['title']):
