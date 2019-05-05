@@ -209,7 +209,7 @@ def handle_state(user, resp):
             else:
                 resp.msg('Что вы хотите узнать?')
                 for i in ['Время работы', 'телефон', 'адрес', 'покажи на карте']:
-                    user.add_button(Button(user, None, i, attach=False))
+                    user.add_button(Button(user, None, i, attach=False, payload={'input': i}))
                 return resp
             user.state = user.back()
             return handle_state(user, resp)
@@ -279,6 +279,10 @@ def handle_state(user, resp):
                     user.add_card(card)
                 else:
                     user.add_button(btn)
+            elif 'input' in pl:
+                user.type = 'SimpleUtterance'
+                user.text = pl['input']
+                return handle_state(user, resp)
         else:
             resp.text = 'Выполняю'
 
