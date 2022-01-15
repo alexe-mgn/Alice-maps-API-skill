@@ -308,3 +308,7 @@ def handle_state(user, resp):
             resp.text = 'Выполняю'
 
     return resp
+
+
+if __name__ == "__main__":
+
